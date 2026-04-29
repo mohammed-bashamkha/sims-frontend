@@ -14,6 +14,16 @@ import { EditSchool } from './pages/EditSchool';
 import { Profile } from './pages/Profile';
 import { SettingsLayout } from './pages/SettingsLayout';
 
+// Academic Affairs
+import { AcademicLayout } from './pages/academic/AcademicLayout';
+import { AcademicYears } from './pages/academic/AcademicYears';
+import { SchoolClasses } from './pages/academic/SchoolClasses';
+import { Subjects } from './pages/academic/Subjects';
+import { StudentGrades } from './pages/academic/StudentGrades';
+import { Replacements } from './pages/academic/Replacements';
+import { StudentDataErrors } from './pages/academic/StudentDataErrors';
+import { SuspendedStudents } from './pages/academic/SuspendedStudents';
+
 function App() {
   return (
     <BrowserRouter>
@@ -33,6 +43,18 @@ function App() {
           <Route path="schools" element={<SchoolsIndex />} />
           <Route path="schools/create" element={<CreateSchool />} />
           <Route path="schools/edit/:id" element={<EditSchool />} />
+          
+          <Route path="academic" element={<AcademicLayout />}>
+            <Route index element={<Navigate to="years" replace />} />
+            <Route path="years" element={<AcademicYears />} />
+            <Route path="classes" element={<SchoolClasses />} />
+            <Route path="subjects" element={<Subjects />} />
+            <Route path="grades" element={<StudentGrades />} />
+            <Route path="replacements" element={<Replacements />} />
+            <Route path="data-errors" element={<StudentDataErrors />} />
+            <Route path="suspended" element={<SuspendedStudents />} />
+          </Route>
+
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<SettingsLayout />} />
         </Route>
