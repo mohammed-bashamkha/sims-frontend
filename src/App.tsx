@@ -11,6 +11,8 @@ import { ShowStudent } from './pages/ShowStudent';
 import { SchoolsIndex } from './pages/SchoolsIndex';
 import { CreateSchool } from './pages/CreateSchool';
 import { EditSchool } from './pages/EditSchool';
+import { Profile } from './pages/Profile';
+import { SettingsLayout } from './pages/SettingsLayout';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
           <Route path="schools" element={<SchoolsIndex />} />
           <Route path="schools/create" element={<CreateSchool />} />
           <Route path="schools/edit/:id" element={<EditSchool />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<SettingsLayout />} />
         </Route>
       </Routes>
     </BrowserRouter>

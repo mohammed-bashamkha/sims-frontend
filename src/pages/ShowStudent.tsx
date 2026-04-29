@@ -3,8 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { 
   ChevronLeft, User, Building2, Calendar, Edit, 
   FileText, CheckCircle, ArrowRightLeft, Clock,
-  AlertTriangle, FileQuestion, BookOpen, GraduationCap, MapPin, Flag,
-  FileDown
+  AlertTriangle, FileQuestion, GraduationCap, MapPin, Flag,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 

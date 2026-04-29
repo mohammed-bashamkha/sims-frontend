@@ -89,7 +89,7 @@ export const DashboardLayout: React.FC = () => {
 
           <div>
             <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">النظام</h2>
-            <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white">
+            <Link to="/settings" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/settings') && "bg-primary text-white")}>
               <Settings size={20} />
               <span>إعدادات النظام</span>
             </Link>
@@ -142,9 +142,9 @@ export const DashboardLayout: React.FC = () => {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             
-            <button className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">
+            <Link to="/profile" className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors">
               <User size={18} />
-            </button>
+            </Link>
           </div>
         </header>
 
