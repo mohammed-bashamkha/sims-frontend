@@ -109,7 +109,7 @@ export const StudentRecord: React.FC = () => {
               <TableRow key={s.id} className="cursor-pointer transition-colors hover:bg-muted/30">
                 <TableCell><Checkbox /></TableCell>
                 <TableCell className="font-medium">{s.idNumber}</TableCell>
-                <TableCell>{s.name}</TableCell>
+                <TableCell className="text-primary hover:underline cursor-pointer font-medium" onClick={(e) => { e.stopPropagation(); navigate(`/students/${s.id}`); }}>{s.name}</TableCell>
                 <TableCell>{s.level}</TableCell>
                 <TableCell>{s.school}</TableCell>
                 <TableCell>
@@ -119,7 +119,7 @@ export const StudentRecord: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1.5 items-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"><Eye size={16}/></Button>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/students/${s.id}`); }} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"><Eye size={16}/></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"><ArrowRightLeft size={16}/></Button>
                     <DropdownMenu dir="rtl">
                       <DropdownMenuTrigger asChild>

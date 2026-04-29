@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { StudentRecord } from './pages/StudentRecord';
 import { CreateStudent } from './pages/CreateStudent';
 import { EditStudent } from './pages/EditStudent';
+import { ShowStudent } from './pages/ShowStudent';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<StudentRecord />} />
+          <Route path="students/:id" element={<ShowStudent />} />
           <Route path="students/create" element={<CreateStudent />} />
           <Route path="students/edit/:id" element={<EditStudent />} />
         </Route>
