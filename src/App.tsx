@@ -8,6 +8,9 @@ import { StudentRecord } from './pages/StudentRecord';
 import { CreateStudent } from './pages/CreateStudent';
 import { EditStudent } from './pages/EditStudent';
 import { ShowStudent } from './pages/ShowStudent';
+import { SchoolsIndex } from './pages/SchoolsIndex';
+import { CreateSchool } from './pages/CreateSchool';
+import { EditSchool } from './pages/EditSchool';
 
 function App() {
   return (
@@ -25,6 +28,9 @@ function App() {
           <Route path="students/:id" element={<ShowStudent />} />
           <Route path="students/create" element={<CreateStudent />} />
           <Route path="students/edit/:id" element={<EditStudent />} />
+          <Route path="schools" element={<SchoolsIndex />} />
+          <Route path="schools/create" element={<CreateSchool />} />
+          <Route path="schools/edit/:id" element={<EditSchool />} />
         </Route>
       </Routes>
     </BrowserRouter>
