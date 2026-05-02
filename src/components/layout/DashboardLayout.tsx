@@ -1,14 +1,28 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ArrowRightLeft, Clock,
   Building2, BookOpen, BarChart3, Settings,
   LogOut, Search, Bell, CalendarDays, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logout, getStoredUser } from '@/services/authService';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = getStoredUser();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // force logout even if API fails
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+    }
+    navigate('/auth/login');
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50" dir="rtl">
@@ -102,11 +116,11 @@ export const DashboardLayout: React.FC = () => {
               <User size={20} className="text-slate-300" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">محمد بالسود</p>
-              <p className="text-xs text-slate-400">مشرف النظام المركزي</p>
+              <p className="text-sm font-bold text-white">{user?.name || 'المستخدم'}</p>
+              <p className="text-xs text-slate-400">{user?.email || ''}</p>
             </div>
           </div>
-          <button className="text-slate-400 hover:text-red-400 transition-colors">
+          <button onClick={handleLogout} title="تسجيل الخروج" className="text-slate-400 hover:text-red-400 transition-colors">
             <LogOut size={20} />
           </button>
         </div>
