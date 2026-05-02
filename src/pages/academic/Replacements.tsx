@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileQuestion, Search, Plus, Edit, Trash2, Calendar, FileText, Image as ImageIcon, School, GraduationCap, Eye, Printer, CheckCircle2, User, ArrowRight } from 'lucide-react';
+import { FileQuestion, Search, Plus, Edit, Trash2, Calendar, FileText, Image as ImageIcon, School, GraduationCap, Eye, Printer, CheckCircle2, User, ArrowRight, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -222,6 +222,26 @@ export const Replacements: React.FC = () => {
             تفاصيل شهادة / إفادة
           </h3>
           <div className="flex items-center gap-3">
+            {/* PDF للطالب — GET /api/pdf/certificate-replacement/{id}?type=student */}
+            <a
+              href={`/api/pdf/certificate-replacement/${viewingRecord.id}?type=student`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
+            >
+              <FileDown size={16} />
+              PDF للطالب
+            </a>
+            {/* PDF للإدارة — GET /api/pdf/certificate-replacement/{id}?type=office */}
+            <a
+              href={`/api/pdf/certificate-replacement/${viewingRecord.id}?type=office`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
+            >
+              <FileDown size={16} />
+              PDF للإدارة
+            </a>
             <Button 
               onClick={() => window.print()}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 rounded-xl px-6 shadow-sm print:hidden"

@@ -97,7 +97,6 @@ export const StudentDataErrors: React.FC = () => {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-5"></div>
           
           <div className="p-8 md:p-12 relative z-10">
             {/* Header: Student Info */}

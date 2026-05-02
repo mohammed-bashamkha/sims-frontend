@@ -58,7 +58,7 @@ export const DashboardLayout: React.FC = () => {
               </Link>
               <Link 
                 to="/temporary-admission" 
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white"
+                className={cn("flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/temporary-admission') && "bg-primary text-white")}
               >
                 <div className="flex items-center gap-3">
                   <Clock size={20} />

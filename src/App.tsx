@@ -13,6 +13,8 @@ import { CreateSchool } from './pages/CreateSchool';
 import { EditSchool } from './pages/EditSchool';
 import { Profile } from './pages/Profile';
 import { SettingsLayout } from './pages/SettingsLayout';
+import { TransfersIndex } from './pages/TransfersIndex';
+import { TemporaryAdmissions } from './pages/TemporaryAdmissions';
 
 // Academic Affairs
 import { AcademicLayout } from './pages/academic/AcademicLayout';
@@ -43,6 +45,9 @@ function App() {
           <Route path="schools" element={<SchoolsIndex />} />
           <Route path="schools/create" element={<CreateSchool />} />
           <Route path="schools/edit/:id" element={<EditSchool />} />
+          
+          <Route path="transfers" element={<TransfersIndex />} />
+          <Route path="temporary-admission" element={<TemporaryAdmissions />} />
           
           <Route path="academic" element={<AcademicLayout />}>
             <Route index element={<Navigate to="years" replace />} />
