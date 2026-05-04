@@ -60,7 +60,6 @@ export const Login: React.FC = () => {
           className="bg-background"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          required
           autoComplete="email"
         />
       </div>
@@ -76,7 +75,6 @@ export const Login: React.FC = () => {
             className="pl-10 pr-3 bg-background text-right"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            required
             autoComplete="current-password"
           />
           <button

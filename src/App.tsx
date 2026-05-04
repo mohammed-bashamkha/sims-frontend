@@ -26,10 +26,14 @@ import { StudentGrades } from './pages/academic/StudentGrades';
 import { Replacements } from './pages/academic/Replacements';
 import { StudentDataErrors } from './pages/academic/StudentDataErrors';
 import { SuspendedStudents } from './pages/academic/SuspendedStudents';
+import { ImportStudents } from './pages/academic/ImportStudents';
+import { ImportFinalResults } from './pages/academic/ImportFinalResults';
+import { Toaster } from './components/ui/Toaster';
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster />
       <Routes>
         {/* ─── Auth Routes (guests only) ─── */}
         <Route element={<GuestRoute />}>
@@ -52,6 +56,7 @@ function App() {
             <Route path="students/:id" element={<ShowStudent />} />
             <Route path="students/create" element={<CreateStudent />} />
             <Route path="students/edit/:id" element={<EditStudent />} />
+            <Route path="students/import" element={<ImportStudents />} />
             <Route path="schools" element={<SchoolsIndex />} />
             <Route path="schools/create" element={<CreateSchool />} />
             <Route path="schools/edit/:id" element={<EditSchool />} />
@@ -68,6 +73,7 @@ function App() {
               <Route path="replacements" element={<Replacements />} />
               <Route path="data-errors" element={<StudentDataErrors />} />
               <Route path="suspended" element={<SuspendedStudents />} />
+              <Route path="import-final-results" element={<ImportFinalResults />} />
             </Route>
 
             <Route path="profile" element={<Profile />} />

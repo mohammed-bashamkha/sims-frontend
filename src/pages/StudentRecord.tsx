@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Download, UserPlus, MoreVertical, Eye, ArrowRightLeft, Edit, Trash2 } from 'lucide-react';
+import { Search, Filter, Download, UserPlus, MoreVertical, Eye, ArrowRightLeft, Edit, Trash2, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -50,6 +50,10 @@ export const StudentRecord: React.FC = () => {
           <Button variant="outline" className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 font-bold">
             <Download className="mr-2" size={18} />
             تصدير (Excel)
+          </Button>
+          <Button variant="secondary" className="font-bold bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => navigate('/students/import')}>
+            <UploadCloud className="mr-2 text-primary" size={18} />
+            استيراد بيانات
           </Button>
           <Button className="font-bold" onClick={() => navigate('/students/create')}>
             <UserPlus className="mr-2" size={18} />

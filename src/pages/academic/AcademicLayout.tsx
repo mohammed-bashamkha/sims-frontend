@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { BookOpen, Calendar, Layers, GraduationCap, FileQuestion, AlertTriangle, UserX } from 'lucide-react';
+import { BookOpen, Calendar, Layers, GraduationCap, FileQuestion, AlertTriangle, UserX, FileUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const AcademicLayout: React.FC = () => {
@@ -14,6 +14,7 @@ export const AcademicLayout: React.FC = () => {
     { name: 'بدل فاقد', path: '/academic/replacements', icon: FileQuestion },
     { name: 'أخطاء البيانات', path: '/academic/data-errors', icon: AlertTriangle },
     { name: 'الطلاب الموقوفين', path: '/academic/suspended', icon: UserX },
+    { name: 'استيراد النتائج', path: '/academic/import-final-results', icon: FileUp },
   ];
 
   return (
