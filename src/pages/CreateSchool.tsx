@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, ChevronLeft } from 'lucide-react';
-import { SchoolForm, type SchoolFormData } from '@/components/schools/SchoolForm';
+import { SchoolForm } from '@/components/schools/SchoolForm';
+import { schoolService } from '@/services/schoolService';
+import type { SchoolFormData } from '@/types/school';
 
 export const CreateSchool: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (data: SchoolFormData) => {
-    setIsLoading(true);
-    // محاكاة الإرسال للباك إند
-    setTimeout(() => {
-      console.log('Sending to API: POST /api/schools', data);
-      setIsLoading(false);
-      alert('تم تسجيل المدرسة بنجاح!');
+    try {
+      setIsLoading(true);
+      await schoolService.createSchool(data);
       navigate('/schools');
-    }, 1500);
+    } catch (error) {
+      console.error('Failed to create school:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

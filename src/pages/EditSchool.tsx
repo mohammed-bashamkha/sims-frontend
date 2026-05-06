@@ -1,40 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Building2, ChevronLeft } from 'lucide-react';
-import { SchoolForm, type SchoolFormData } from '@/components/schools/SchoolForm';
+import { Building2, ChevronLeft, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SchoolForm } from '@/components/schools/SchoolForm';
+import { schoolService } from '@/services/schoolService';
+import type { SchoolFormData } from '@/types/school';
 
 export const EditSchool: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [initialData, setInitialData] = useState<Partial<SchoolFormData> | null>(null);
 
   useEffect(() => {
-    // محاكاة جلب بيانات المدرسة من الباك إند
     const fetchSchool = async () => {
-      // setTimeout لمؤثر التحميل
-      setTimeout(() => {
+      if (!id) return;
+      try {
+        setIsFetching(true);
+        const data = await schoolService.getSchool(id);
         setInitialData({
-          name: 'ثانوية المكلا النموذجية',
-          school_type: 'public',
-          capacity: 600,
-          address: 'المكلا - الديس',
+          name: data.name,
+          school_type: data.school_type,
+          capacity: data.capacity,
+          address: data.address || '',
         });
-      }, 500);
+      } catch (error) {
+        console.error('Failed to fetch school details:', error);
+      } finally {
+        setIsFetching(false);
+      }
     };
 
     fetchSchool();
   }, [id]);
 
   const handleSubmit = async (data: SchoolFormData) => {
-    setIsLoading(true);
-    // محاكاة الإرسال للباك إند
-    setTimeout(() => {
-      console.log(`Sending to API: PUT /api/schools/${id}`, data);
-      setIsLoading(false);
-      alert('تم تعديل بيانات المدرسة بنجاح!');
+    if (!id) return;
+    try {
+      setIsLoading(true);
+      await schoolService.updateSchool(id, data);
       navigate('/schools');
-    }, 1500);
+    } catch (error) {
+      console.error('Failed to update school:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,7 +70,12 @@ export const EditSchool: React.FC = () => {
         <p className="text-slate-500 mt-2">قم بتحديث بيانات المدرسة الحالية وحفظ التعديلات.</p>
       </div>
 
-      {initialData ? (
+      {isFetching ? (
+        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-3xl border border-slate-100">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+          <p className="text-slate-500 font-medium">جاري جلب بيانات المدرسة...</p>
+        </div>
+      ) : initialData ? (
         <SchoolForm 
           initialData={initialData} 
           onSubmit={handleSubmit} 
@@ -67,8 +83,11 @@ export const EditSchool: React.FC = () => {
           isLoading={isLoading} 
         />
       ) : (
-        <div className="flex justify-center p-12">
-          <span className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full"></span>
+        <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">
+          <p className="text-red-600 font-bold">عذراً، تعذر العثور على بيانات المدرسة.</p>
+          <Button variant="link" onClick={() => navigate('/schools')} className="mt-2">
+            العودة لقائمة المدارس
+          </Button>
         </div>
       )}
 

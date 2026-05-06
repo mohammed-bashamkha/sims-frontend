@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Edit, MoreVertical, Building2, Users, MapPin, Trash2 } from 'lucide-react';
+import { Search, Filter, Plus, Edit, MoreVertical, Building2, Users, MapPin, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,29 +11,71 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { schoolService } from '@/services/schoolService';
+import type { School } from '@/types/school';
+import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
+import { toast } from '@/store/toastStore';
 
 export const SchoolsIndex: React.FC = () => {
   const navigate = useNavigate();
+  const [schools, setSchools] = useState<School[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; // Adjust for grid
+  const [searchTerm, setSearchTerm] = useState('');
+  const [schoolType, setSchoolType] = useState('');
+  const itemsPerPage = 8;
 
-  // Mock data based on Laravel backend schema
-  const mockSchools = [
-    { id: 1, name: 'ثانوية المكلا النموذجية', school_type: 'public', capacity: 600, current_students: 580, address: 'المكلا - الديس' },
-    { id: 2, name: 'مدرسة الجماهير للتعليم الأساسي', school_type: 'public', capacity: 850, current_students: 800, address: 'المكلا - الشرج' },
-    { id: 3, name: 'مدارس النور الأهلية', school_type: 'private', capacity: 1200, current_students: 600, address: 'المكلا - فوه' },
-    { id: 4, name: 'مدرسة بلقيس للبنات', school_type: 'public', capacity: 450, current_students: 445, address: 'المكلا - السلام' },
-    { id: 5, name: 'أكاديمية الموهوبين', school_type: 'private', capacity: 300, current_students: 150, address: 'سيئون' },
-    { id: 6, name: 'ثانوية بن شهاب', school_type: 'public', capacity: 700, current_students: 750, address: 'المكلا' },
-    { id: 7, name: 'مدرسة الزهراء', school_type: 'public', capacity: 500, current_students: 400, address: 'الشحر' },
-  ];
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const totalPages = Math.ceil(mockSchools.length / itemsPerPage);
-  const currentSchools = mockSchools.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchSchools();
+    }, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [searchTerm, schoolType]);
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه المدرسة؟ لن تتمكن من التراجع عن هذا الإجراء.')) {
-      alert(`تم حذف المدرسة رقم ${id} بنجاح`);
+  const fetchSchools = async () => {
+    try {
+      setIsLoading(true);
+      const data = await schoolService.getSchools(searchTerm, schoolType);
+      setSchools(data);
+    } catch (error) {
+      console.error('Failed to fetch schools:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(schools.length / itemsPerPage);
+  const currentSchools = schools.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleDeleteClick = (school: School) => {
+    // التحقق من وجود طلاب مسجلين
+    if (school.current_students > 0) {
+      toast(`لا يمكن حذف المدرسة "${school.name}" لوجود ${school.current_students} طالب مسجل بها.`, 'error');
+      return;
+    }
+    
+    setSchoolToDelete(school);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!schoolToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      await schoolService.deleteSchool(schoolToDelete.id);
+      setSchools(prev => prev.filter(s => s.id !== schoolToDelete.id));
+      setIsDeleteModalOpen(false);
+      setSchoolToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete school:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -63,104 +105,133 @@ export const SchoolsIndex: React.FC = () => {
             placeholder="البحث باسم المدرسة..." 
             className="pl-4 pr-10 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl"
             dir="rtl"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         
         <div className="flex flex-wrap gap-3">
-          <select className="flex h-10 w-full sm:w-auto items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-600">
+          <select 
+            value={schoolType}
+            onChange={(e) => setSchoolType(e.target.value)}
+            className="flex h-10 w-full sm:w-auto items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-600"
+          >
             <option value="">جميع الأنواع</option>
             <option value="public">حكومي</option>
             <option value="private">خاص / أهلي</option>
           </select>
           
-          <Button variant="secondary" className="font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl">
+          <Button 
+            variant="secondary" 
+            className="font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl"
+            onClick={fetchSchools}
+          >
             <Filter className="mr-2" size={18} />
             تصفية
           </Button>
         </div>
       </div>
 
-      {/* Grid Layout for Schools */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {currentSchools.map((school) => (
-          <div key={school.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col group">
-            <div className="p-5 border-b border-slate-50 flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0 mt-1">
-                  <Building2 size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800 text-lg line-clamp-2 leading-tight">{school.name}</h3>
-                  <div className="mt-2">
-                    {school.school_type === 'public' ? (
-                      <Badge variant="default" className="bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-none border-none py-0.5 px-2.5 font-medium">حكومي</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-none border-none py-0.5 px-2.5 font-medium">خاص</Badge>
-                    )}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-2xl border border-slate-100">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+          <p className="text-slate-500 font-medium">جاري جلب بيانات المدارس...</p>
+        </div>
+      ) : schools.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-20 bg-white rounded-2xl border border-slate-100 text-center">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+            <Building2 size={40} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">لا توجد مدارس مسجلة</h3>
+          <p className="text-slate-500 max-w-xs">لم يتم إضافة أي مدارس إلى النظام بعد. ابدأ بإضافة أول مدرسة الآن.</p>
+          <Can permission="create_school">
+            <Button className="mt-6 font-bold" onClick={() => navigate('/schools/create')}>
+              إضافة مدرسة جديدة
+            </Button>
+          </Can>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {currentSchools.map((school) => (
+            <div key={school.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col group">
+              <div className="p-5 border-b border-slate-50 flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0 mt-1">
+                    <Building2 size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg line-clamp-2 leading-tight">{school.name}</h3>
+                    <div className="mt-2">
+                      {school.school_type === 'public' ? (
+                        <Badge variant="default" className="bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-none border-none py-0.5 px-2.5 font-medium">حكومي</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-purple-50 text-purple-700 hover:bg-purple-100 shadow-none border-none py-0.5 px-2.5 font-medium">خاص</Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <DropdownMenu dir="rtl">
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg -mr-2">
-                    <MoreVertical size={16}/>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-xl border-slate-100 shadow-sm">
-                  <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-slate-600 hover:text-primary focus:text-primary hover:bg-slate-50 focus:bg-slate-50">
-                    <Building2 size={16} />
-                    <span>التفاصيل</span>
-                  </DropdownMenuItem>
-                  <Can permission="delete_school">
-                    <DropdownMenuItem onClick={() => handleDelete(school.id)} className="cursor-pointer flex items-center gap-2 text-red-600 hover:text-red-700 focus:text-red-700 hover:bg-red-50 focus:bg-red-50">
-                      <Trash2 size={16} />
-                      <span>حذف المدرسة</span>
+                <DropdownMenu dir="rtl">
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg -mr-2">
+                      <MoreVertical size={16}/>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40 rounded-xl border-slate-100 shadow-sm">
+                    <DropdownMenuItem className="cursor-pointer flex items-center gap-2 text-slate-600 hover:text-primary focus:text-primary hover:bg-slate-50 focus:bg-slate-50">
+                      <Building2 size={16} />
+                      <span>التفاصيل</span>
                     </DropdownMenuItem>
-                  </Can>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div className="p-5 flex-1 flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5 mt-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600 flex items-center gap-1.5"><Users size={16} className="text-slate-400" /> الكثافة الطلابية</span>
-                  <span className="font-bold text-slate-800">{school.current_students} <span className="text-slate-400 font-normal text-xs">/ {school.capacity}</span></span>
+                    <Can permission="delete_school">
+                      <DropdownMenuItem onClick={() => handleDeleteClick(school)} className="cursor-pointer flex items-center gap-2 text-red-600 hover:text-red-700 focus:text-red-700 hover:bg-red-50 focus:bg-red-50">
+                        <Trash2 size={16} />
+                        <span>حذف المدرسة</span>
+                      </DropdownMenuItem>
+                    </Can>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="p-5 flex-1 flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600 flex items-center gap-1.5"><Users size={16} className="text-slate-400" /> الكثافة الطلابية</span>
+                    <span className="font-bold text-slate-800">{school.current_students} <span className="text-slate-400 font-normal text-xs">/ {school.capacity}</span></span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full ${school.current_students / school.capacity >= 1 ? 'bg-red-500' : school.current_students / school.capacity > 0.8 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                      style={{ width: `${Math.min((school.current_students / school.capacity) * 100, 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full ${school.current_students / school.capacity >= 1 ? 'bg-red-500' : school.current_students / school.capacity > 0.8 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
-                    style={{ width: `${Math.min((school.current_students / school.capacity) * 100, 100)}%` }}
-                  ></div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <MapPin size={16} className="text-slate-400 shrink-0" />
+                  <span className="line-clamp-1">العنوان: <strong className="text-slate-800">{school.address || '—'}</strong></span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <MapPin size={16} className="text-slate-400 shrink-0" />
-                <span className="line-clamp-1">العنوان: <strong className="text-slate-800">{school.address || '—'}</strong></span>
+              
+              <div className="p-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl">
+                <Can permission="edit_school">
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-slate-600 border-slate-200 hover:bg-white hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center gap-2 rounded-xl"
+                    onClick={() => navigate(`/schools/edit/${school.id}`)}
+                  >
+                    <Edit size={16}/>
+                    <span>تعديل بيانات المدرسة</span>
+                  </Button>
+                </Can>
               </div>
             </div>
-            
-            <div className="p-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl">
-              <Can permission="edit_school">
-                <Button 
-                  variant="outline" 
-                  className="w-full text-slate-600 border-slate-200 hover:bg-white hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center gap-2 rounded-xl"
-                  onClick={() => navigate(`/schools/edit/${school.id}`)}
-                >
-                  <Edit size={16}/>
-                  <span>تعديل بيانات المدرسة</span>
-                </Button>
-              </Can>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-between px-6 py-4 bg-white border border-slate-100 rounded-2xl shadow-sm mt-2">
           <div className="text-sm text-slate-500 font-medium">
-            عرض {(currentPage - 1) * itemsPerPage + 1} إلى {Math.min(currentPage * itemsPerPage, mockSchools.length)} من {mockSchools.length} مدارس
+            عرض {(currentPage - 1) * itemsPerPage + 1} إلى {Math.min(currentPage * itemsPerPage, schools.length)} من {schools.length} مدارس
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -187,6 +258,20 @@ export const SchoolsIndex: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSchoolToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="حذف المدرسة"
+        message="هل أنت متأكد من رغبتك في حذف هذه المدرسة؟ سيؤدي هذا الإجراء إلى إزالة كافة البيانات المرتبطة بها نهائياً."
+        itemName={schoolToDelete?.name}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
