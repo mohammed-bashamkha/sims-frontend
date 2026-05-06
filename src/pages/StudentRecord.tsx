@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Can } from '@/components/common/Can';
 
 export const StudentRecord: React.FC = () => {
   const navigate = useNavigate();
@@ -51,14 +52,16 @@ export const StudentRecord: React.FC = () => {
             <Download className="mr-2" size={18} />
             تصدير (Excel)
           </Button>
-          <Button variant="secondary" className="font-bold bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => navigate('/students/import')}>
-            <UploadCloud className="mr-2 text-primary" size={18} />
-            استيراد بيانات
-          </Button>
-          <Button className="font-bold" onClick={() => navigate('/students/create')}>
-            <UserPlus className="mr-2" size={18} />
-            تسجيل طالب جديد
-          </Button>
+          <Can permission="create_student">
+            <Button variant="secondary" className="font-bold bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => navigate('/students/import')}>
+              <UploadCloud className="mr-2 text-primary" size={18} />
+              استيراد بيانات
+            </Button>
+            <Button className="font-bold" onClick={() => navigate('/students/create')}>
+              <UserPlus className="mr-2" size={18} />
+              تسجيل طالب جديد
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -132,14 +135,18 @@ export const StudentRecord: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => navigate(`/students/edit/${s.id}`)} className="cursor-pointer flex items-center gap-2">
-                          <Edit size={16} />
-                          <span>تعديل الطالب</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(s.id)} className="cursor-pointer text-red-600 focus:text-red-600 flex items-center gap-2">
-                          <Trash2 size={16} />
-                          <span>حذف الطالب</span>
-                        </DropdownMenuItem>
+                        <Can permission="edit_student">
+                          <DropdownMenuItem onClick={() => navigate(`/students/edit/${s.id}`)} className="cursor-pointer flex items-center gap-2">
+                            <Edit size={16} />
+                            <span>تعديل الطالب</span>
+                          </DropdownMenuItem>
+                        </Can>
+                        <Can permission="delete_student">
+                          <DropdownMenuItem onClick={() => handleDelete(s.id)} className="cursor-pointer text-red-600 focus:text-red-600 flex items-center gap-2">
+                            <Trash2 size={16} />
+                            <span>حذف الطالب</span>
+                          </DropdownMenuItem>
+                        </Can>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

@@ -20,11 +20,7 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const { token, user } = await login({ email, password });
-
-      // Store token & user in localStorage
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('auth_user', JSON.stringify(user));
+      const { user } = await login({ email, password });
 
       // Admin يتجاهل must_change_password — متوافق مع EnsurePasswordIsChanged middleware
       if (user.must_change_password && !isAdmin(user)) {

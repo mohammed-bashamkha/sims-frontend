@@ -11,11 +11,23 @@ export interface AuthUser {
   email: string;
   must_change_password: boolean;
   roles?: Array<{ name: string }>;
+  permissions_list?: string[];
 }
 
 export function isAdmin(user: AuthUser | null): boolean {
   if (!user) return false;
   return (user.roles ?? []).some(r => r.name === 'admin');
+}
+
+/**
+ * hasPermission — checks if the currently stored user has a given permission.
+ * Admins automatically bypass all permission checks.
+ */
+export function hasPermission(permission: string): boolean {
+  const user = getStoredUser();
+  if (!user) return false;
+  if (isAdmin(user)) return true; // Admin bypasses all
+  return (user.permissions_list ?? []).includes(permission);
 }
 
 export interface ChangePasswordPayload {
@@ -28,19 +40,31 @@ export interface ChangePasswordPayload {
 export async function login(payload: LoginPayload): Promise<{ token: string; user: AuthUser }> {
   const response = await api.post('/login', payload);
   const token: string = response.data.access_token;
-  // Fetch current user with roles after login
-  const userResponse = await api.get('/user', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const user: AuthUser = userResponse.data;
-  return { token, user };
+  
+  // Important: Store token immediately so subsequent user fetch uses it
+  localStorage.setItem('auth_token', token);
+
+  try {
+    // Fetch current user with roles AND permissions after login
+    const userResponse = await api.get('/user');
+    const user: AuthUser = userResponse.data;
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    return { token, user };
+  } catch (error) {
+    // If fetching user fails, clean up token
+    localStorage.removeItem('auth_token');
+    throw error;
+  }
 }
 
 // POST /api/logout
 export async function logout(): Promise<void> {
-  await api.post('/logout');
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('auth_user');
+  try {
+    await api.post('/logout');
+  } finally {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+  }
 }
 
 // POST /api/change-password

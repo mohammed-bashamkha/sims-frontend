@@ -14,6 +14,10 @@ import { CreateSchool } from './pages/CreateSchool';
 import { EditSchool } from './pages/EditSchool';
 import { Profile } from './pages/Profile';
 import { SettingsLayout } from './pages/SettingsLayout';
+import { ShowUser } from './pages/ShowUser';
+import { EditUser } from './pages/EditUser';
+import { ShowRole } from './pages/ShowRole';
+import { EditRole } from './pages/EditRole';
 import { TransfersIndex } from './pages/TransfersIndex';
 import { TemporaryAdmissions } from './pages/TemporaryAdmissions';
 
@@ -47,23 +51,42 @@ function App() {
           <Route index element={<ChangePassword />} />
         </Route>
 
-        {/* ─── Protected Routes ─── */}
+        {/* ─── Protected Routes (requires authentication) ─── */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+
+            {/* ── Students ── */}
             <Route path="students" element={<StudentRecord />} />
             <Route path="students/:id" element={<ShowStudent />} />
-            <Route path="students/create" element={<CreateStudent />} />
-            <Route path="students/edit/:id" element={<EditStudent />} />
-            <Route path="students/import" element={<ImportStudents />} />
-            <Route path="schools" element={<SchoolsIndex />} />
-            <Route path="schools/create" element={<CreateSchool />} />
-            <Route path="schools/edit/:id" element={<EditSchool />} />
+            {/* إنشاء طالب: يتطلب صلاحية */}
+            <Route element={<ProtectedRoute allowedPermission="create_student" />}>
+              <Route path="students/create" element={<CreateStudent />} />
+            </Route>
+            {/* تعديل طالب: يتطلب صلاحية */}
+            <Route element={<ProtectedRoute allowedPermission="edit_student" />}>
+              <Route path="students/edit/:id" element={<EditStudent />} />
+            </Route>
+            {/* استيراد بيانات الطلاب */}
+            <Route element={<ProtectedRoute allowedPermission="create_student" />}>
+              <Route path="students/import" element={<ImportStudents />} />
+            </Route>
 
+            {/* ── Schools ── */}
+            <Route path="schools" element={<SchoolsIndex />} />
+            <Route element={<ProtectedRoute allowedPermission="create_school" />}>
+              <Route path="schools/create" element={<CreateSchool />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedPermission="edit_school" />}>
+              <Route path="schools/edit/:id" element={<EditSchool />} />
+            </Route>
+
+            {/* ── Transfers & Admissions ── */}
             <Route path="transfers" element={<TransfersIndex />} />
             <Route path="temporary-admission" element={<TemporaryAdmissions />} />
 
+            {/* ── Academic Affairs ── */}
             <Route path="academic" element={<AcademicLayout />}>
               <Route index element={<Navigate to="years" replace />} />
               <Route path="years" element={<AcademicYears />} />
@@ -76,8 +99,15 @@ function App() {
               <Route path="import-final-results" element={<ImportFinalResults />} />
             </Route>
 
+            {/* ── Settings (System Admin only) ── */}
             <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<SettingsLayout />} />
+            <Route element={<ProtectedRoute allowedPermission="manage_users" />}>
+              <Route path="settings" element={<SettingsLayout />} />
+              <Route path="settings/users/:id" element={<ShowUser />} />
+              <Route path="settings/users/edit/:id" element={<EditUser />} />
+              <Route path="settings/roles/:id" element={<ShowRole />} />
+              <Route path="settings/roles/edit/:id" element={<EditRole />} />
+            </Route>
           </Route>
         </Route>
 

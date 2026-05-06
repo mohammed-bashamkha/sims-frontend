@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Users, Building2, ArrowRightLeft, FileWarning, 
-  AlertTriangle, RotateCw, ChevronLeft, UserPlus, 
+  AlertTriangle, RotateCw, UserPlus, 
   UploadCloud, Download, Edit3, XCircle, CheckCircle, 
   Activity, AlertCircle, Loader2
 } from 'lucide-react';

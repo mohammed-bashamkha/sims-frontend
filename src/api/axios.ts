@@ -12,7 +12,7 @@ const api = axios.create({
 // Attach token automatically to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
-  if (token) {
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -36,7 +36,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
-      window.location.href = '/auth/login';
+      
+      // Don't redirect if we are already on login page or trying to login
+      if (!window.location.pathname.includes('/auth/login') && !error.config.url?.includes('/login')) {
+        window.location.href = '/auth/login';
+      }
     }
 
     // Handle global error toasts

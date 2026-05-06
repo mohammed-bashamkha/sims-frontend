@@ -4,6 +4,7 @@ import { Search, Filter, Plus, Edit, MoreVertical, Building2, Users, MapPin, Tra
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Can } from '@/components/common/Can';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,10 +47,12 @@ export const SchoolsIndex: React.FC = () => {
           إدارة المدارس
         </h1>
         <div className="flex gap-3">
-          <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl shadow-sm px-6" onClick={() => navigate('/schools/create')}>
-            <Plus className="mr-2" size={18} />
-            إضافة مدرسة جديدة
-          </Button>
+          <Can permission="create_school">
+            <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl shadow-sm px-6" onClick={() => navigate('/schools/create')}>
+              <Plus className="mr-2" size={18} />
+              إضافة مدرسة جديدة
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -108,10 +111,12 @@ export const SchoolsIndex: React.FC = () => {
                     <Building2 size={16} />
                     <span>التفاصيل</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDelete(school.id)} className="cursor-pointer flex items-center gap-2 text-red-600 hover:text-red-700 focus:text-red-700 hover:bg-red-50 focus:bg-red-50">
-                    <Trash2 size={16} />
-                    <span>حذف المدرسة</span>
-                  </DropdownMenuItem>
+                  <Can permission="delete_school">
+                    <DropdownMenuItem onClick={() => handleDelete(school.id)} className="cursor-pointer flex items-center gap-2 text-red-600 hover:text-red-700 focus:text-red-700 hover:bg-red-50 focus:bg-red-50">
+                      <Trash2 size={16} />
+                      <span>حذف المدرسة</span>
+                    </DropdownMenuItem>
+                  </Can>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -136,14 +141,16 @@ export const SchoolsIndex: React.FC = () => {
             </div>
             
             <div className="p-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl">
-              <Button 
-                variant="outline" 
-                className="w-full text-slate-600 border-slate-200 hover:bg-white hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center gap-2 rounded-xl"
-                onClick={() => navigate(`/schools/edit/${school.id}`)}
-              >
-                <Edit size={16}/>
-                <span>تعديل بيانات المدرسة</span>
-              </Button>
+              <Can permission="edit_school">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-slate-600 border-slate-200 hover:bg-white hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center gap-2 rounded-xl"
+                  onClick={() => navigate(`/schools/edit/${school.id}`)}
+                >
+                  <Edit size={16}/>
+                  <span>تعديل بيانات المدرسة</span>
+                </Button>
+              </Can>
             </div>
           </div>
         ))}
