@@ -7,6 +7,7 @@ import { subjectService } from '@/services/subjectService';
 import type { Subject, Level, SchoolClass, SubjectFormData } from '@/types/subject';
 import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
 import { toast } from '@/store/toastStore';
+import { Can } from '@/components/common/Can';
 
 export const Subjects: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -234,13 +235,15 @@ export const Subjects: React.FC = () => {
           </p>
         </div>
 
-        <Button 
-          onClick={() => handleOpenModal()}
-          className="bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl px-6"
-        >
-          <Plus size={18} />
-          إضافة مادة جديدة
-        </Button>
+        <Can permission="المواد.اضافة">
+          <Button 
+            onClick={() => handleOpenModal()}
+            className="bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl px-6"
+          >
+            <Plus size={18} />
+            إضافة مادة جديدة
+          </Button>
+        </Can>
       </div>
 
       {/* Filter/Search */}
@@ -296,20 +299,24 @@ export const Subjects: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleOpenModal(subject)}
-                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      title="تعديل"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteClick(subject)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="حذف"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <Can permission="المواد.تعديل">
+                      <button 
+                        onClick={() => handleOpenModal(subject)}
+                        className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        title="تعديل"
+                      >
+                        <Edit size={18} />
+                      </button>
+                    </Can>
+                    <Can permission="المواد.حذف">
+                      <button 
+                        onClick={() => handleDeleteClick(subject)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="حذف"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </Can>
                   </div>
                 </div>
 

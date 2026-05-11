@@ -1,20 +1,30 @@
-import React, { useState } from 'react';
-import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import api from '@/api/axios';
+import { hasPermission } from '@/services/authService';
+import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
 
 // Interfaces
 interface Student {
   id: number;
-  name: string;
+  full_name: string;
   school_number: string;
-  class_id: number;
+  current_enrollment?: {
+    class_id: number;
+    academic_year_id: number;
+  };
+  enrollments?: Array<{
+    class_id: number;
+    academic_year_id: number;
+  }>;
 }
 
 interface Subject {
   id: number;
   name: string;
-  class_id: number;
+  school_classes?: Array<{ id: number; name: string }>;
 }
 
 interface AcademicYear {
@@ -36,75 +46,101 @@ interface StudentGradeRecord {
   grades: GradeEntry[];
 }
 
-// Mock Data
-const MOCK_ACADEMIC_YEARS: AcademicYear[] = [
-  { id: 1, year: '2023/2024', is_current: false },
-  { id: 2, year: '2024/2025', is_current: true },
-];
-
-const MOCK_STUDENTS: Student[] = [
-  { id: 1, name: 'محمد علي النمر', school_number: '1001', class_id: 1 },
-  { id: 2, name: 'أحمد صالح الكربي', school_number: '1002', class_id: 1 },
-  { id: 3, name: 'سالم عبدالله باوزير', school_number: '1003', class_id: 2 },
-];
-
-const MOCK_SUBJECTS: Subject[] = [
-  { id: 1, name: 'القرآن الكريم', class_id: 1 },
-  { id: 2, name: 'التربية الإسلامية', class_id: 1 },
-  { id: 3, name: 'اللغة العربية', class_id: 1 },
-  { id: 4, name: 'الرياضيات', class_id: 1 },
-  { id: 5, name: 'اللغة العربية', class_id: 2 },
-  { id: 6, name: 'الرياضيات', class_id: 2 },
-];
-
-const INITIAL_RECORDS: StudentGradeRecord[] = [
-  {
-    id: 1,
-    student_id: 1,
-    academic_year_id: 1,
-    grades: [
-      { subject_id: 1, first_semester: 40, second_semester: 45 },
-      { subject_id: 2, first_semester: 38, second_semester: 42 },
-      { subject_id: 3, first_semester: 35, second_semester: 40 },
-      { subject_id: 4, first_semester: 42, second_semester: 48 },
-    ]
-  },
-  {
-    id: 2,
-    student_id: 1,
-    academic_year_id: 2,
-    grades: [
-      { subject_id: 1, first_semester: 45, second_semester: 48 },
-      { subject_id: 2, first_semester: 40, second_semester: 45 },
-      { subject_id: 3, first_semester: 35, second_semester: 42 },
-      { subject_id: 4, first_semester: 48, second_semester: 50 },
-    ]
-  }
-];
-
 export const StudentGrades: React.FC = () => {
-  const [records, setRecords] = useState<StudentGradeRecord[]>(INITIAL_RECORDS);
+  const [records, setRecords] = useState<StudentGradeRecord[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const canManage = hasPermission('الدرجات.ادارة');
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedYearFilter, setSelectedYearFilter] = useState<number>(2); // Default to current year (id: 2)
+  const [selectedYearFilter, setSelectedYearFilter] = useState<number>(0);
   
   // View states: 'index' | 'create' | 'edit' | 'read'
   const [currentView, setCurrentView] = useState<'index' | 'create' | 'edit' | 'read'>('index');
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   
   // Form state for grades
   const [gradeForm, setGradeForm] = useState<GradeEntry[]>([]);
-  const [formAcademicYearId, setFormAcademicYearId] = useState<number>(2);
+  const [formAcademicYearId, setFormAcademicYearId] = useState<number>(0);
+
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<StudentGradeRecord | null>(null);
+
+  // Fetch data
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [gradesRes, studentsRes, subjectsRes, yearsRes] = await Promise.all([
+        api.get('/grades'),
+        api.get('/students'),
+        api.get('/subjects'),
+        api.get('/academic-years')
+      ]);
+
+      const yearsData: AcademicYear[] = yearsRes.data.data || yearsRes.data;
+      const subjectsData = subjectsRes.data.data || subjectsRes.data;
+
+      setStudents(studentsRes.data.data || studentsRes.data);
+      setSubjects(subjectsData);
+      setAcademicYears(yearsData);
+
+      const currentYear = yearsData.find((y: AcademicYear) => y.is_current);
+      if (currentYear && selectedYearFilter === 0) {
+        setSelectedYearFilter(currentYear.id);
+      } else if (yearsData.length > 0 && selectedYearFilter === 0) {
+        setSelectedYearFilter(yearsData[0].id);
+      }
+
+      // Transform flat grades into StudentGradeRecord array
+      const flatGrades = gradesRes.data;
+      const grouped = new Map<string, StudentGradeRecord>();
+      
+      flatGrades.forEach((grade: any) => {
+        const key = `${grade.student_id}-${grade.academic_year_id}`;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            id: grade.id,
+            student_id: grade.student_id,
+            academic_year_id: grade.academic_year_id,
+            grades: []
+          });
+        }
+        
+        grouped.get(key)!.grades.push({
+          subject_id: grade.subject_id,
+          first_semester: grade.first_semester_total ?? '',
+          second_semester: grade.second_semester_total ?? ''
+        });
+      });
+      
+      setRecords(Array.from(grouped.values()));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Helpers
-  const getStudent = (id: number) => MOCK_STUDENTS.find(s => s.id === id);
-  const getSubjectsForClass = (classId: number) => MOCK_SUBJECTS.filter(s => s.class_id === classId);
-  const getAcademicYear = (id: number) => MOCK_ACADEMIC_YEARS.find(y => y.id === id);
+  const getStudent = (id: number) => students.find(s => s.id === id);
+  const getSubjectsForClass = (classId: number) => subjects.filter(s => 
+    s.school_classes?.some((c: any) => c.id === classId)
+  );
+  const getAcademicYear = (id: number) => academicYears.find(y => y.id === id);
   const getRecord = (studentId: number, yearId: number) => records.find(r => r.student_id === studentId && r.academic_year_id === yearId);
 
   // Filter students based on search
-  const filteredStudents = MOCK_STUDENTS.filter(s => 
-    s.name.includes(searchQuery) || s.school_number.includes(searchQuery)
+  const filteredStudents = students.filter(s => 
+    s.full_name?.includes(searchQuery) || s.school_number?.includes(searchQuery)
   );
 
   const handleCreate = (studentId: number) => {
@@ -113,7 +149,16 @@ export const StudentGrades: React.FC = () => {
     const student = getStudent(studentId);
     if (!student) return;
 
-    const subjects = getSubjectsForClass(student.class_id);
+    // Determine the class_id from enrollments
+    const enrollment = student.enrollments?.find(e => e.academic_year_id === selectedYearFilter) 
+                    || student.current_enrollment;
+    
+    if (!enrollment) {
+      alert('الطالب غير مسجل في أي صف لهذه السنة الدراسية.');
+      return;
+    }
+
+    const subjects = getSubjectsForClass(enrollment.class_id);
     setGradeForm(subjects.map(sub => ({
       subject_id: sub.id,
       first_semester: '',
@@ -122,20 +167,25 @@ export const StudentGrades: React.FC = () => {
     setCurrentView('create');
   };
 
-  const handleEdit = (recordId: number) => {
-    const record = records.find(r => r.id === recordId);
+  const handleEdit = (studentId: number, academicYearId: number) => {
+    // Use the composite key (student_id + academic_year_id) — more reliable than a single grade's DB id
+    const record = getRecord(studentId, academicYearId);
     if (!record) return;
-    
-    setSelectedStudentId(record.student_id);
-    setEditingRecordId(recordId);
-    setFormAcademicYearId(record.academic_year_id);
-    
-    const student = getStudent(record.student_id);
+
+    setSelectedStudentId(studentId);
+    setFormAcademicYearId(academicYearId);
+
+    const student = getStudent(studentId);
     if (!student) return;
 
-    const subjects = getSubjectsForClass(student.class_id);
-    
-    setGradeForm(subjects.map(sub => {
+    const enrollment = student.enrollments?.find(e => e.academic_year_id === academicYearId)
+                    || student.current_enrollment;
+
+    if (!enrollment) return;
+
+    const subjectList = getSubjectsForClass(enrollment.class_id);
+
+    setGradeForm(subjectList.map(sub => {
       const existing = record.grades.find(g => g.subject_id === sub.id);
       return {
         subject_id: sub.id,
@@ -151,9 +201,24 @@ export const StudentGrades: React.FC = () => {
     setCurrentView('read');
   };
 
-  const handleDelete = (recordId: number) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه النتيجة بالكامل؟')) {
-      setRecords(records.filter(r => r.id !== recordId));
+  const handleDelete = (record: StudentGradeRecord) => {
+    setRecordToDelete(record);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!recordToDelete) return;
+    
+    setSubmitting(true);
+    try {
+      await api.delete(`/grades/bulk/${recordToDelete.student_id}/${recordToDelete.academic_year_id}`);
+      await fetchData();
+      setIsDeleteModalOpen(false);
+      setRecordToDelete(null);
+    } catch (error) {
+      console.error('Error deleting grades:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -167,39 +232,46 @@ export const StudentGrades: React.FC = () => {
     ));
   };
 
-  const handleSaveGrades = (e: React.FormEvent) => {
+  const handleSaveGrades = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudentId) return;
 
-    // Check if record already exists for this student + academic year (when creating)
-    if (currentView === 'create') {
-      const exists = records.some(r => r.student_id === selectedStudentId && r.academic_year_id === formAcademicYearId);
-      if (exists) {
-        alert('يوجد سجل درجات مسجل مسبقاً لهذا الطالب في نفس السنة الدراسية المحددة.');
-        return;
-      }
-    }
-
-    if (currentView === 'edit' && editingRecordId) {
-      setRecords(records.map(r => r.id === editingRecordId ? {
-        ...r,
-        academic_year_id: formAcademicYearId,
-        grades: gradeForm
-      } : r));
-    } else {
-      const newId = Math.max(0, ...records.map(r => r.id)) + 1;
-      setRecords([...records, {
-        id: newId,
+    setSubmitting(true);
+    try {
+      const payload = {
         student_id: selectedStudentId,
         academic_year_id: formAcademicYearId,
-        grades: gradeForm
-      }]);
+        grades: gradeForm.map(g => ({
+          subject_id: g.subject_id,
+          first_semester: g.first_semester === '' ? null : g.first_semester,
+          second_semester: g.second_semester === '' ? null : g.second_semester
+        }))
+      };
+
+      await api.post('/grades/bulk', payload);
+      await fetchData();
+      
+      setCurrentView('index');
+      setSelectedStudentId(null);
+    } catch (error) {
+      console.error('Error saving grades:', error);
+    } finally {
+      setSubmitting(false);
     }
-    
-    setCurrentView('index');
-    setSelectedStudentId(null);
-    setEditingRecordId(null);
   };
+
+  // Global Delete Confirmation Modal — must be outside any conditional view block
+  const deleteModal = (
+    <DeleteConfirmationModal
+      isOpen={isDeleteModalOpen}
+      onClose={() => setIsDeleteModalOpen(false)}
+      onConfirm={confirmDelete}
+      title="حذف درجات الطالب"
+      message="هل أنت متأكد من رغبتك في حذف جميع درجات هذا الطالب للعام الدراسي المحدد؟ سيعتبر الطالب في حكم (الغير مرصود)."
+      itemName={recordToDelete ? getStudent(recordToDelete.student_id)?.full_name : undefined}
+      isLoading={submitting}
+    />
+  );
 
   // Render Index View
   if (currentView === 'index') {
@@ -234,7 +306,7 @@ export const StudentGrades: React.FC = () => {
               value={selectedYearFilter}
               onChange={(e) => setSelectedYearFilter(Number(e.target.value))}
             >
-              {MOCK_ACADEMIC_YEARS.map(y => (
+              {academicYears.map((y: AcademicYear) => (
                 <option key={y.id} value={y.id}>{y.year}</option>
               ))}
             </select>
@@ -274,7 +346,7 @@ export const StudentGrades: React.FC = () => {
                             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                               <User size={14} />
                             </div>
-                            <span className="font-bold text-slate-800">{student.name}</span>
+                            <span className="font-bold text-slate-800">{student.full_name}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 font-medium text-slate-700" dir="ltr">
@@ -302,20 +374,24 @@ export const StudentGrades: React.FC = () => {
                                 >
                                   <Eye size={18} />
                                 </button>
-                                <button 
-                                  onClick={() => handleEdit(recordForSelectedYear!.id)}
-                                  className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                  title="تعديل نتيجة هذه السنة"
-                                >
-                                  <Edit size={18} />
-                                </button>
-                                <button 
-                                  onClick={() => handleDelete(recordForSelectedYear!.id)}
-                                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="حذف نتيجة هذه السنة"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
+                                {canManage && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleEdit(student.id, selectedYearFilter)}
+                                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                      title="تعديل نتيجة هذه السنة"
+                                    >
+                                      <Edit size={18} />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDelete(recordForSelectedYear!)}
+                                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                      title="حذف نتيجة هذه السنة"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </>
+                                )}
                               </>
                             ) : (
                               <>
@@ -326,13 +402,15 @@ export const StudentGrades: React.FC = () => {
                                 >
                                   <Eye size={18} />
                                 </button>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleCreate(student.id)}
-                                  className="bg-primary hover:bg-primary/90 text-white gap-1 rounded-lg h-8"
-                                >
-                                  <Plus size={14} /> رصد الدرجات
-                                </Button>
+                                {canManage && (
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => handleCreate(student.id)}
+                                    className="bg-primary hover:bg-primary/90 text-white gap-1 rounded-lg h-8"
+                                  >
+                                    <Plus size={14} /> رصد الدرجات
+                                  </Button>
+                                )}
                               </>
                             )}
                           </div>
@@ -344,7 +422,14 @@ export const StudentGrades: React.FC = () => {
               </tbody>
             </table>
           </div>
+          {loading && (
+            <div className="flex flex-col items-center justify-center p-12 bg-white border-t border-slate-100">
+              <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+              <p className="text-slate-500 font-medium">جاري تحميل البيانات...</p>
+            </div>
+          )}
         </div>
+        {deleteModal}
       </div>
     );
   }
@@ -352,13 +437,15 @@ export const StudentGrades: React.FC = () => {
   // Render Form (Create / Edit) View
   if (currentView === 'create' || currentView === 'edit') {
     const student = getStudent(selectedStudentId!);
-    const subjects = getSubjectsForClass(student!.class_id);
+    const enrollment = student?.enrollments?.find(e => e.academic_year_id === formAcademicYearId) 
+                    || student?.current_enrollment;
+    const subjects = enrollment ? getSubjectsForClass(enrollment.class_id) : [];
 
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => { setCurrentView('index'); setSelectedStudentId(null); setEditingRecordId(null); }}
+            onClick={() => { setCurrentView('index'); setSelectedStudentId(null); }}
             className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors"
           >
             <ArrowRight size={20} />
@@ -368,7 +455,7 @@ export const StudentGrades: React.FC = () => {
               {currentView === 'create' ? 'رصد درجات طالب جديد' : 'تعديل درجات الطالب'}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              إدخال درجات جميع المواد للطالب: <strong className="text-primary">{student?.name}</strong> (رقم: {student?.school_number})
+              إدخال درجات جميع المواد للطالب: <strong className="text-primary">{student?.full_name}</strong> (رقم: {student?.school_number})
             </p>
           </div>
         </div>
@@ -383,7 +470,7 @@ export const StudentGrades: React.FC = () => {
                   onChange={(e) => setFormAcademicYearId(Number(e.target.value))}
                   disabled={currentView === 'edit'} // Don't allow changing year during edit to prevent conflicts
                 >
-                  {MOCK_ACADEMIC_YEARS.map(y => (
+                  {academicYears.map((y: AcademicYear) => (
                     <option key={y.id} value={y.id}>{y.year}</option>
                   ))}
                 </select>
@@ -449,8 +536,12 @@ export const StudentGrades: React.FC = () => {
           </div>
           
           <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl px-8">
-              <Save size={18} />
+            <Button 
+              type="submit" 
+              disabled={submitting}
+              className="bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl px-8"
+            >
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
               حفظ درجات الطالب
             </Button>
           </div>
@@ -463,7 +554,6 @@ export const StudentGrades: React.FC = () => {
   if (currentView === 'read') {
     const student = getStudent(selectedStudentId!);
     const studentRecords = records.filter(r => r.student_id === selectedStudentId);
-    const subjects = getSubjectsForClass(student!.class_id);
 
     return (
       <div className="space-y-6">
@@ -479,7 +569,7 @@ export const StudentGrades: React.FC = () => {
               سجل درجات الطالب الشامل
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              <strong className="text-primary">{student?.name}</strong> (رقم: {student?.school_number})
+              <strong className="text-primary">{student?.full_name}</strong> (رقم: {student?.school_number})
             </p>
           </div>
         </div>
@@ -496,13 +586,16 @@ export const StudentGrades: React.FC = () => {
           <div className="space-y-8">
             {studentRecords.map((record) => {
               const academicYear = getAcademicYear(record.academic_year_id);
+              const enrollment = student?.enrollments?.find(e => e.academic_year_id === record.academic_year_id) 
+                              || student?.current_enrollment;
+              const yearSubjects = enrollment ? getSubjectsForClass(enrollment.class_id) : [];
               
               // Calculate overall result for the year
               let totalScore = 0;
-              let maxPossibleScore = subjects.length * 100;
+              let maxPossibleScore = yearSubjects.length * 100;
               let hasFailedSubject = false;
               
-              subjects.forEach(subject => {
+              yearSubjects.forEach(subject => {
                 const grade = record.grades.find(g => g.subject_id === subject.id);
                 const first = typeof grade?.first_semester === 'number' ? grade.first_semester : 0;
                 const second = typeof grade?.second_semester === 'number' ? grade.second_semester : 0;
@@ -553,7 +646,7 @@ export const StudentGrades: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {subjects.map((subject) => {
+                        {yearSubjects.map((subject) => {
                           const grade = record.grades.find(g => g.subject_id === subject.id);
                           const first = typeof grade?.first_semester === 'number' ? grade.first_semester : 0;
                           const second = typeof grade?.second_semester === 'number' ? grade.second_semester : 0;
@@ -586,6 +679,8 @@ export const StudentGrades: React.FC = () => {
             })}
           </div>
         )}
+        
+        {deleteModal}
       </div>
     );
   }

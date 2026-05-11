@@ -27,7 +27,19 @@ export function hasPermission(permission: string): boolean {
   const user = getStoredUser();
   if (!user) return false;
   if (isAdmin(user)) return true; // Admin bypasses all
-  return (user.permissions_list ?? []).includes(permission);
+  
+  const permissions = user.permissions_list ?? [];
+  
+  // Check exact match
+  if (permissions.includes(permission)) return true;
+  
+  // Check for 'ادارة' fallback (e.g., if checking 'المدارس.تعديل', also check 'المدارس.ادارة')
+  if (permission.includes('.')) {
+    const module = permission.split('.')[0];
+    if (permissions.includes(`${module}.ادارة`)) return true;
+  }
+  
+  return false;
 }
 
 export interface ChangePasswordPayload {

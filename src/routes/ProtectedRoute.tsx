@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { isAuthenticated, getStoredUser, isAdmin, hasPermission } from '@/services/authService';
-import { toast } from '@/store/toastStore';
 
 interface ProtectedRouteProps {
   /** If provided, the user must have this Spatie permission to access the route.
@@ -30,19 +29,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedPermissio
 
   // فحص الصلاحية إذا تم تحديدها
   if (allowedPermission && !hasPermission(allowedPermission)) {
-    return <PermissionDeniedRedirect permission={allowedPermission} />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <Outlet />;
-};
-
-/** مكون مساعد داخلي: يعرض Toast ثم يعيد التوجيه للداشبورد */
-const PermissionDeniedRedirect: React.FC<{ permission: string }> = ({ permission }) => {
-  useEffect(() => {
-    toast('غير مصرح لك بالوصول لهذه الصفحة', 'error');
-  }, [permission]);
-
-  return <Navigate to="/dashboard" replace />;
 };
 
 /**

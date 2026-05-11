@@ -5,18 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UploadCloud, AlertTriangle, FileUp, Loader2 } from 'lucide-react';
+import { UploadCloud, AlertTriangle, FileUp, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface FormOptions {
   schools: { id: number; name: string }[];
   school_classes: { id: number; name: string }[];
-  academicYears: { id: number; year: string; is_active: boolean }[];
+  academicYears: { id: number; year: string; status: string }[];
 }
 
 export const ImportStudents: React.FC = () => {
   const [options, setOptions] = useState<FormOptions | null>(null);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<any>(null);
+  const [sampleData, setSampleData] = useState<any[]>([]);
 
   // Form State
   const [schoolId, setSchoolId] = useState<string>('');
@@ -27,14 +28,18 @@ export const ImportStudents: React.FC = () => {
 
   useEffect(() => {
     api.get('/students/import')
-      .then(res => setOptions(res.data))
+      .then(res => {
+        // Handle both wrapped and unwrapped data
+        const data = res.data.data || res.data;
+        setOptions(data);
+      })
       .catch(err => console.error("Error loading form options", err));
   }, []);
 
   useEffect(() => {
     // Auto-select active year
     if (options?.academicYears) {
-      const activeYear = options.academicYears.find(y => y.is_active);
+      const activeYear = options.academicYears.find(y => y.status === 'active');
       if (activeYear && !academicYearId) {
         setAcademicYearId(activeYear.id.toString());
       }
@@ -44,10 +49,12 @@ export const ImportStudents: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+      setReport(null);
+      setSampleData([]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceImport = false) => {
     e.preventDefault();
     if (!schoolId || !classId || !academicYearId || !file) {
       return;
@@ -55,13 +62,16 @@ export const ImportStudents: React.FC = () => {
 
     setLoading(true);
     setReport(null);
+    setSampleData([]);
 
     const formData = new FormData();
     formData.append('school_id', schoolId);
     formData.append('class_id', classId);
     formData.append('academic_year_id', academicYearId);
     formData.append('file', file);
-    if (preview) {
+    
+    const isPreview = preview && !forceImport;
+    if (isPreview) {
       formData.append('preview', '1');
     }
 
@@ -70,13 +80,18 @@ export const ImportStudents: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      setReport(res.data.import_report || res.data.report);
+      const resReport = res.data.import_report || res.data.report;
+      setReport({ ...resReport, isPreview, message: res.data.message });
+      if (res.data.sample_data) {
+        setSampleData(res.data.sample_data);
+      }
     } catch (err: any) {
       if (err.response?.status === 422) {
          setReport({ failures: err.response.data.failures, message: err.response.data.message });
       } else if (err.response?.data?.import_report) {
-         // partial success or other structure
          setReport(err.response.data.import_report);
+      } else {
+         setReport({ message: err.response?.data?.message || 'حدث خطأ غير متوقع أثناء المعالجة' });
       }
     } finally {
       setLoading(false);
@@ -101,7 +116,7 @@ export const ImportStudents: React.FC = () => {
             <CardTitle className="text-lg">إعدادات الاستيراد</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
               {/* Academic Year */}
               <div className="space-y-2">
                 <Label>السنة الدراسية</Label>
@@ -112,7 +127,7 @@ export const ImportStudents: React.FC = () => {
                   <SelectContent>
                     {options?.academicYears.map(year => (
                       <SelectItem key={year.id} value={year.id.toString()}>
-                        {year.year} {year.is_active && "(الحالية)"}
+                        {year.year} {year.status === 'active' && "(الحالية)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -168,20 +183,23 @@ export const ImportStudents: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2 space-x-reverse pt-2">
-                <Checkbox id="preview" checked={preview} onCheckedChange={(checked) => setPreview(checked as boolean)} />
+                <Checkbox id="preview" checked={preview} onCheckedChange={(checked) => {
+                  setPreview(checked as boolean);
+                  setReport(null); // Clear previous reports when changing mode
+                }} />
                 <label htmlFor="preview" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  وضع المعاينة (تجربة الاستيراد بدون حفظ)
+                  وضع المعاينة (مراجعة البيانات قبل الحفظ)
                 </label>
               </div>
 
-              <Button type="submit" className="w-full mt-4" disabled={loading || !file || !schoolId || !classId || !academicYearId}>
+              <Button type="submit" variant={preview ? "secondary" : "default"} className="w-full mt-4 font-bold" disabled={loading || !file || !schoolId || !classId || !academicYearId}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 ml-2 h-4 w-4 animate-spin" />
                     جاري المعالجة...
                   </>
                 ) : (
-                  'بدء الاستيراد'
+                  preview ? 'معاينة البيانات' : 'بدء الاستيراد المباشر'
                 )}
               </Button>
             </form>
@@ -213,10 +231,10 @@ export const ImportStudents: React.FC = () => {
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                 
                 {report.message && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <div className={`p-4 rounded-lg flex items-start gap-3 ${report.isPreview ? 'bg-amber-50 text-amber-700' : report.failures ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                    {report.isPreview ? <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" /> : report.failures ? <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />}
                     <div>
-                      <h4 className="font-semibold">{report.message}</h4>
+                      <h4 className="font-bold">{report.isPreview ? 'هذه معاينة فقط. لم يتم حفظ البيانات في النظام بعد.' : report.message}</h4>
                     </div>
                   </div>
                 )}
@@ -244,14 +262,64 @@ export const ImportStudents: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex justify-between items-center">
-                          <span className="text-blue-800 text-sm font-medium">طلاب تم إنشاؤهم:</span>
+                          <span className="text-blue-800 text-sm font-medium">طلاب سيتم إنشاؤهم:</span>
                           <span className="bg-blue-200 text-blue-900 px-3 py-1 rounded-full font-bold text-sm">{report.summary.students_created}</span>
                        </div>
                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex justify-between items-center">
-                          <span className="text-indigo-800 text-sm font-medium">طلاب تم تحديثهم:</span>
+                          <span className="text-indigo-800 text-sm font-medium">طلاب سيتم تحديثهم:</span>
                           <span className="bg-indigo-200 text-indigo-900 px-3 py-1 rounded-full font-bold text-sm">{report.summary.students_updated}</span>
                        </div>
                     </div>
+
+                    {/* Sample Data display for Preview Mode */}
+                    {report.isPreview && sampleData.length > 0 && (
+                      <div className="mt-4 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="bg-slate-50 px-4 py-3 border-b border-slate-100">
+                          <h3 className="font-bold text-slate-700">عينة من البيانات المقروءة (أول {sampleData.length} صفوف)</h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm text-right">
+                            <thead className="bg-slate-50 text-slate-600 border-b">
+                              <tr>
+                                <th className="px-4 py-2 font-bold">الرقم المدرسي</th>
+                                <th className="px-4 py-2 font-bold">الاسم الرباعي</th>
+                                <th className="px-4 py-2 font-bold">الجنسية</th>
+                                <th className="px-4 py-2 font-bold">الإجراء المتوقع</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {sampleData.map((s: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-slate-50">
+                                  <td className="px-4 py-2 font-medium" dir="ltr">{s.school_number}</td>
+                                  <td className="px-4 py-2 text-primary">{s.full_name}</td>
+                                  <td className="px-4 py-2">{s.nationality}</td>
+                                  <td className="px-4 py-2">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${s.status === 'طالب جديد' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                      {s.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Confirmation Button */}
+                    {report.isPreview && (
+                      <div className="mt-8 pt-4 border-t border-slate-200 flex justify-end">
+                        <Button 
+                          onClick={(e) => handleSubmit(e, true)} 
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 shadow-md"
+                          size="lg"
+                          disabled={loading}
+                        >
+                          <CheckCircle2 className="ml-2 h-5 w-5" />
+                          تأكيد واعتماد الاستيراد
+                        </Button>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -311,3 +379,4 @@ export const ImportStudents: React.FC = () => {
     </div>
   );
 };
+

@@ -2,23 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Save, User, Building2, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-// Mock Data for Dropdowns
-const MOCK_SCHOOLS = [
-  { id: 1, name: 'الزهراء للبنات' },
-  { id: 2, name: 'المكلا النموذجية' },
-  { id: 3, name: 'ثانوية ابن سيناء' },
-];
+interface Option {
+  id: number | string;
+  name: string;
+}
 
-const MOCK_CLASSES = [
-  { id: 1, name: 'الصف الأول الثانوي' },
-  { id: 2, name: 'الصف الثاني الثانوي' },
-  { id: 3, name: 'الصف الثالث الثانوي' },
-];
-
-const MOCK_YEARS = [
-  { id: 1, name: '2025/2026' },
-  { id: 2, name: '2024/2025' },
-];
+interface YearOption {
+  id: number | string;
+  year: string;
+}
 
 export interface StudentFormData {
   school_number: string;
@@ -40,13 +32,21 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData) => void;
   isEditing?: boolean;
   isLoading?: boolean;
+  schools?: Option[];
+  classes?: Option[];
+  years?: YearOption[];
+  errors?: Record<string, string[]>;
 }
 
 export const StudentForm: React.FC<StudentFormProps> = ({ 
   initialData, 
   onSubmit, 
   isEditing = false,
-  isLoading = false 
+  isLoading = false,
+  schools = [],
+  classes = [],
+  years = [],
+  errors = {}
 }) => {
   const [formData, setFormData] = useState<StudentFormData>({
     school_number: '',
@@ -59,7 +59,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
     registration_date: new Date().toISOString().split('T')[0],
     school_id: '',
     class_id: '',
-    academic_year_id: MOCK_YEARS[0].id.toString(),
+    academic_year_id: '',
     reason: '',
   });
 
@@ -100,8 +100,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 onChange={handleChange}
                 required 
                 placeholder="الاسم الأول، اسم الأب، الجد، اللقب"
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className={`w-full border ${errors.full_name ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               />
+              {errors.full_name && <p className="text-xs text-red-500 mt-1">{errors.full_name[0]}</p>}
             </div>
 
             <div className="space-y-1">
@@ -111,8 +112,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="nationality"
                 value={formData.nationality}
                 onChange={handleChange}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className={`w-full border ${errors.nationality ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               />
+              {errors.nationality && <p className="text-xs text-red-500 mt-1">{errors.nationality[0]}</p>}
             </div>
 
             <div className="space-y-1">
@@ -122,11 +124,12 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 value={formData.gender}
                 onChange={handleChange}
                 required
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className={`w-full border ${errors.gender ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               >
                 <option value="male">ذكر</option>
                 <option value="female">أنثى</option>
               </select>
+              {errors.gender && <p className="text-xs text-red-500 mt-1">{errors.gender[0]}</p>}
             </div>
 
             <div className="space-y-1">
@@ -136,8 +139,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="place_of_birth"
                 value={formData.place_of_birth}
                 onChange={handleChange}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className={`w-full border ${errors.place_of_birth ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               />
+              {errors.place_of_birth && <p className="text-xs text-red-500 mt-1">{errors.place_of_birth[0]}</p>}
             </div>
 
             <div className="space-y-1">
@@ -147,8 +151,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="date_of_birth"
                 value={formData.date_of_birth}
                 onChange={handleChange}
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className={`w-full border ${errors.date_of_birth ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               />
+              {errors.date_of_birth && <p className="text-xs text-red-500 mt-1">{errors.date_of_birth[0]}</p>}
             </div>
             
           </CardContent>
@@ -171,8 +176,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   value={formData.school_number}
                   onChange={handleChange}
                   required 
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className={`w-full border ${errors.school_number ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 />
+                {errors.school_number && <p className="text-xs text-red-500 mt-1">{errors.school_number[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -183,8 +189,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   value={formData.seat_number}
                   onChange={handleChange}
                   required 
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className={`w-full border ${errors.seat_number ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 />
+                {errors.seat_number && <p className="text-xs text-red-500 mt-1">{errors.seat_number[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -194,13 +201,14 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   value={formData.school_id}
                   onChange={handleChange}
                   required
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className={`w-full border ${errors.school_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 >
                   <option value="">اختر المدرسة...</option>
-                  {MOCK_SCHOOLS.map(school => (
+                  {schools.map(school => (
                     <option key={school.id} value={school.id}>{school.name}</option>
                   ))}
                 </select>
+                {errors.school_id && <p className="text-xs text-red-500 mt-1">{errors.school_id[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -210,13 +218,14 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   value={formData.class_id}
                   onChange={handleChange}
                   required
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className={`w-full border ${errors.class_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 >
                   <option value="">اختر الصف...</option>
-                  {MOCK_CLASSES.map(cls => (
+                  {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>{cls.name}</option>
                   ))}
                 </select>
+                {errors.class_id && <p className="text-xs text-red-500 mt-1">{errors.class_id[0]}</p>}
               </div>
 
               <div className="space-y-1">
@@ -226,12 +235,14 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   value={formData.academic_year_id}
                   onChange={handleChange}
                   required
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-slate-50"
+                  className={`w-full border ${errors.academic_year_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary bg-slate-50`}
                 >
-                  {MOCK_YEARS.map(year => (
-                    <option key={year.id} value={year.id}>{year.name}</option>
+                  <option value="">اختر العام...</option>
+                  {years.map(year => (
+                    <option key={year.id} value={year.id}>{year.year}</option>
                   ))}
                 </select>
+                {errors.academic_year_id && <p className="text-xs text-red-500 mt-1">{errors.academic_year_id[0]}</p>}
               </div>
 
             </CardContent>
@@ -255,8 +266,9 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 required={isEditing}
                 rows={2}
                 placeholder="مثال: تصحيح خطأ إملائي في اسم الطالب..."
-                className="w-full border border-amber-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
+                className={`w-full border ${errors.reason ? 'border-red-400' : 'border-amber-200'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white`}
               />
+              {errors.reason && <p className="text-xs text-red-600 mt-1">{errors.reason[0]}</p>}
             </div>
           </CardContent>
         </Card>
