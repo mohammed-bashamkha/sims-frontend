@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserX, Search, CheckCircle, AlertTriangle, PlayCircle, School, GraduationCap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserX, Search, CheckCircle, AlertTriangle, PlayCircle, School, GraduationCap, Loader2, ChevronRight, ChevronLeft, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,75 +10,71 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-// Interfaces based on backend schema in SuspendedStudentController
-interface SuspendedEnrollment {
-  id: number;
-  student_id: number;
-  status: string;
-  student: {
-    id: number;
-    full_name: string;
-    school_number: string;
-  };
-  school: {
-    name: string;
-  };
-  schoolClass: {
-    name: string;
-  };
-  academicYear: {
-    year: string;
-  };
-  original_school?: {
-    name: string;
-  };
-}
-
-// Mock Data representing the API response
-const MOCK_SUSPENDED: SuspendedEnrollment[] = [
-  {
-    id: 1,
-    student_id: 101,
-    status: 'suspended',
-    student: {
-      id: 101,
-      full_name: 'محمد سالم العمودي',
-      school_number: '2023001',
-    },
-    school: { name: 'مدرسة النهضة (قبول مؤقت)' },
-    schoolClass: { name: 'الصف الأول الثانوي' },
-    academicYear: { year: '2023 / 2024' },
-    original_school: { name: 'ثانوية المكلا النموذجية' },
-  },
-  {
-    id: 2,
-    student_id: 102,
-    status: 'suspended',
-    student: {
-      id: 102,
-      full_name: 'علي حسن العطاس',
-      school_number: '2023055',
-    },
-    school: { name: 'مدرسة الجيل الصاعد (قبول مؤقت)' },
-    schoolClass: { name: 'الصف الثامن الأساسي' },
-    academicYear: { year: '2023 / 2024' },
-    original_school: { name: 'مدرسة الجماهير' },
-  }
-];
+import { suspendedStudentService, type SuspendedEnrollment } from '@/services/suspendedStudentService';
+import { academicYearService, type AcademicYear } from '@/services/academicYearService';
+import { type PaginatedResponse } from '@/services/suspendedStudentService';
 
 export const SuspendedStudents: React.FC = () => {
-  const [records, setRecords] = useState<SuspendedEnrollment[]>(MOCK_SUSPENDED);
+  const [records, setRecords] = useState<SuspendedEnrollment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginatedResponse<SuspendedEnrollment>['meta'] | null>(null);
   
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [selectedYearId, setSelectedYearId] = useState<number | string>('');
+
   // Confirmation Modal State
   const [confirmingRecord, setConfirmingRecord] = useState<SuspendedEnrollment | null>(null);
   const [isActivating, setIsActivating] = useState(false);
 
-  const filteredRecords = records.filter(r => 
-    r.student.full_name.includes(searchQuery) || 
-    r.student.school_number.includes(searchQuery)
-  );
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+  useEffect(() => {
+    fetchSuspendedStudents();
+  }, [selectedYearId, currentPage]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const data = await academicYearService.getAcademicYears();
+      setAcademicYears(data);
+      const activeYear = data.find(y => y.status === 'active');
+      if (activeYear) {
+        setSelectedYearId(activeYear.id);
+      }
+    } catch (error) {
+      console.error('Error fetching academic years:', error);
+    }
+  };
+
+  const fetchSuspendedStudents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await suspendedStudentService.getSuspendedStudents({
+        search: searchQuery,
+        academic_year_id: selectedYearId ? Number(selectedYearId) : undefined,
+        page: currentPage
+      });
+      setRecords(response.data);
+      setPagination(response.meta);
+    } catch (error) {
+      console.error('Error fetching suspended students:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchSuspendedStudents();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleOpenConfirm = (record: SuspendedEnrollment) => {
     setConfirmingRecord(record);
@@ -88,20 +84,27 @@ export const SuspendedStudents: React.FC = () => {
     setConfirmingRecord(null);
   };
 
-  const handleActivate = () => {
+  const handleActivate = async () => {
     if (!confirmingRecord) return;
     
-    // Simulate API Call to /suspended-students/{id}/restore
     setIsActivating(true);
-    
-    setTimeout(() => {
+    try {
+      await suspendedStudentService.restoreStudent(confirmingRecord.student_id);
+      // Success toast is handled by axios interceptor
       setRecords(records.filter(r => r.student_id !== confirmingRecord.student_id));
-      setIsActivating(false);
       setConfirmingRecord(null);
       
-      // In a real app, you would show a toast notification here
-      alert(`تم بنجاح تفعيل الطالب "${confirmingRecord.student.full_name}" وإعادته إلى "${confirmingRecord.original_school?.name || 'مدرسته الأساسية'}"`);
-    }, 800);
+      // If list becomes empty and we're not on page 1, go to previous page
+      if (records.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        fetchSuspendedStudents();
+      }
+    } catch (error) {
+      console.error('Error restoring student:', error);
+    } finally {
+      setIsActivating(false);
+    }
   };
 
   return (
@@ -120,15 +123,40 @@ export const SuspendedStudents: React.FC = () => {
       </div>
 
       {/* Filter/Search */}
-      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input 
-            placeholder="بحث باسم الطالب أو الرقم المدرسي..." 
-            className="pr-10 bg-white rounded-xl border-slate-200"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <form onSubmit={handleSearch} className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Input 
+              placeholder="بحث باسم الطالب أو الرقم المدرسي..." 
+              className="pr-10 bg-white rounded-xl border-slate-200"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button type="submit" variant="secondary" className="rounded-xl">
+            بحث
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-sm w-full md:w-auto">
+            <Filter size={16} className="text-slate-400" />
+            <span className="text-slate-600 font-medium whitespace-nowrap">السنة الدراسية:</span>
+            <select 
+              className="bg-transparent border-none outline-none text-slate-800 font-bold pr-2 cursor-pointer w-full"
+              value={selectedYearId}
+              onChange={(e) => {
+                setSelectedYearId(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">كل السنوات</option>
+              {academicYears.map(year => (
+                <option key={year.id} value={year.id}>{year.year}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -146,7 +174,16 @@ export const SuspendedStudents: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-100">
-              {filteredRecords.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-20 text-slate-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="animate-spin text-primary" size={40} />
+                      <span className="font-bold">جاري تحميل البيانات...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : records.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-16 text-slate-500">
                     <div className="flex flex-col items-center justify-center">
@@ -157,7 +194,7 @@ export const SuspendedStudents: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRecords.map((record) => (
+                records.map((record) => (
                   <TableRow key={record.id} className="hover:bg-slate-50 transition-colors">
                     <TableCell className="py-4 px-6">
                       <div>
@@ -195,9 +232,60 @@ export const SuspendedStudents: React.FC = () => {
                   </TableRow>
                 ))
               )}
-            </TableBody>
+              </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.last_page > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="text-sm text-slate-500">
+              عرض {pagination.from} إلى {pagination.to} من إجمالي {pagination.total} سجل
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="gap-1 rounded-lg"
+              >
+                <ChevronRight size={16} />
+                السابق
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === pagination.last_page || Math.abs(p - currentPage) <= 1)
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-slate-400">...</span>}
+                      <Button
+                        variant={currentPage === p ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handlePageChange(p)}
+                        className={`w-9 h-9 p-0 rounded-lg ${currentPage === p ? 'shadow-md shadow-primary/20' : ''}`}
+                      >
+                        {p}
+                      </Button>
+                    </React.Fragment>
+                  ))
+                }
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === pagination.last_page}
+                className="gap-1 rounded-lg"
+              >
+                التالي
+                <ChevronLeft size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}

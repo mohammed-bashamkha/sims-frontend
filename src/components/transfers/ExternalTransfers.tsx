@@ -1,74 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search, UserPlus, CheckCircle2, XCircle, Clock, Globe, ArrowRight,
-  School, User, Calendar, MapPin, FileText, Eye, Trash2, RefreshCw, Building2
+  School, User, Calendar, MapPin, FileText, Eye, Trash2, RefreshCw, Building2,
+  Loader2, Filter, ChevronRight, ChevronLeft, FileDown
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-
-type TransferStatus = 'pending' | 'approved' | 'rejected';
-
-interface ExternalTransferRecord {
-  id: number;
-  student: {
-    full_name: string; school_number: string; seat_number?: string;
-    gender?: string; nationality?: string; date_of_birth?: string; place_of_birth?: string;
-  };
-  from_external_school_name: string;
-  toSchool: { name: string };
-  schoolClass: { name: string };
-  academicYear: { year: string };
-  status: TransferStatus;
-  request_date: string;
-  reason?: string;
-}
+import { transferService, type TransferAdmissionRecord, type TransferStatus, type PaginatedResponse } from '@/services/transferService';
+import { academicYearService, type AcademicYear } from '@/services/academicYearService';
+import { schoolService } from '@/services/schoolService';
+import { schoolClassService, type SchoolClass } from '@/services/schoolClassService';
+import { type School as SchoolType } from '@/types/school';
 
 const ALLOWED_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
   pending:  ['approved', 'rejected'],
   rejected: ['pending', 'approved'],
   approved: ['rejected'],
 };
-
-const MOCK_EXTERNAL: ExternalTransferRecord[] = [
-  {
-    id: 1,
-    student: {
-      full_name: 'عمر خالد صالح',
-      school_number: '2023099',
-      seat_number: '9901',
-      gender: 'ذكر',
-      nationality: 'يمني',
-      date_of_birth: '2010-03-15',
-      place_of_birth: 'صنعاء',
-    },
-    from_external_school_name: 'مدرسة الوحدة الأساسية (صنعاء)',
-    toSchool: { name: 'مدرسة التفوق' },
-    schoolClass: { name: 'الصف الأول الثانوي' },
-    academicYear: { year: '2025 / 2026' },
-    status: 'approved',
-    request_date: '2026-05-01',
-    reason: 'انتقال الأسرة من المحافظة',
-  },
-  {
-    id: 2,
-    student: {
-      full_name: 'ليلى أحمد باناجة',
-      school_number: '2023110',
-      seat_number: '9902',
-      gender: 'أنثى',
-      nationality: 'يمنية',
-      date_of_birth: '2011-07-22',
-      place_of_birth: 'عدن',
-    },
-    from_external_school_name: 'مدرسة الإصلاح بعدن',
-    toSchool: { name: 'مدرسة الأمل' },
-    schoolClass: { name: 'الصف الثاني الإعدادي' },
-    academicYear: { year: '2025 / 2026' },
-    status: 'pending',
-    request_date: '2026-04-28',
-  },
-];
 
 const StatusBadge: React.FC<{ status: TransferStatus }> = ({ status }) => {
   if (status === 'approved') return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700"><CheckCircle2 size={13} />مقبول</span>;
@@ -96,16 +45,33 @@ const ConfirmDialog: React.FC<{
 );
 
 // ─── Show View ───────────────────────────────────────────────────────────
-const ShowExternal: React.FC<{ record: ExternalTransferRecord; onBack: () => void }> = ({ record, onBack }) => (
+const ShowExternal: React.FC<{
+  record: TransferAdmissionRecord;
+  onBack: () => void;
+  onExportPdf: (id: number) => void;
+  pdfLoadingId: number | null;
+}> = ({ record, onBack, onExportPdf, pdfLoadingId }) => (
   <div className="space-y-6 animate-in fade-in duration-300">
     <div className="flex items-center justify-between pb-4 border-b border-slate-200">
       <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
         <Globe className="text-indigo-600" size={22} />
         تفاصيل طالب وافد من خارج المحافظة
       </h3>
-      <Button onClick={onBack} variant="outline" className="gap-2 rounded-xl font-bold text-slate-600">
-        رجوع للقائمة <ArrowRight size={16} />
-      </Button>
+      <div className="flex items-center gap-3">
+        {record.status === 'approved' && (
+          <Button
+            onClick={() => onExportPdf(record.id)}
+            disabled={pdfLoadingId === record.id}
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm"
+          >
+            {pdfLoadingId === record.id ? <Loader2 className="animate-spin" size={16} /> : <FileDown size={16} />}
+            تصدير PDF
+          </Button>
+        )}
+        <Button onClick={onBack} variant="outline" className="gap-2 rounded-xl font-bold text-slate-600">
+          رجوع للقائمة <ArrowRight size={16} />
+        </Button>
+      </div>
     </div>
 
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -125,13 +91,13 @@ const ShowExternal: React.FC<{ record: ExternalTransferRecord; onBack: () => voi
           <h4 className="text-sm font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><User size={15} />البيانات الشخصية للطالب</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { label: 'الاسم الكامل', value: record.student.full_name },
-              { label: 'الرقم المدرسي', value: record.student.school_number, ltr: true },
-              { label: 'رقم الجلوس', value: record.student.seat_number, ltr: true },
-              { label: 'الجنس', value: record.student.gender },
-              { label: 'الجنسية', value: record.student.nationality },
-              { label: 'تاريخ الميلاد', value: record.student.date_of_birth, ltr: true },
-              { label: 'مكان الميلاد', value: record.student.place_of_birth },
+              { label: 'الاسم الكامل', value: record.student?.full_name },
+              { label: 'الرقم المدرسي', value: record.student?.school_number, ltr: true },
+              { label: 'رقم الجلوس', value: record.student?.seat_number, ltr: true },
+              { label: 'الجنس', value: record.student?.gender },
+              { label: 'الجنسية', value: record.student?.nationality },
+              { label: 'تاريخ الميلاد', value: record.student?.date_of_birth, ltr: true },
+              { label: 'مكان الميلاد', value: record.student?.place_of_birth },
             ].map((item, i) => (
               <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <p className="text-xs text-slate-400 mb-1">{item.label}</p>
@@ -151,11 +117,11 @@ const ShowExternal: React.FC<{ record: ExternalTransferRecord; onBack: () => voi
             </div>
             <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
               <p className="text-xs text-indigo-400 mb-1 flex items-center gap-1"><School size={12} />موجه إلى مدرسة</p>
-              <p className="font-bold text-indigo-700">{record.toSchool.name}</p>
+              <p className="font-bold text-indigo-700">{record.to_school?.name}</p>
             </div>
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
               <p className="text-xs text-slate-400 mb-1">الصف الدراسي</p>
-              <p className="font-bold text-slate-700">{record.schoolClass.name}</p>
+              <p className="font-bold text-slate-700">{record.school_class?.name}</p>
             </div>
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
               <p className="text-xs text-slate-400 mb-1 flex items-center gap-1"><Calendar size={12} />تاريخ الطلب</p>
@@ -177,31 +143,191 @@ const ShowExternal: React.FC<{ record: ExternalTransferRecord; onBack: () => voi
 
 // ─── Main Component ───────────────────────────────────────────────────────
 export const ExternalTransfers: React.FC = () => {
-  const [records, setRecords] = useState<ExternalTransferRecord[]>(MOCK_EXTERNAL);
+  const [records, setRecords] = useState<TransferAdmissionRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'create'>('list');
-  const [viewingRecord, setViewingRecord] = useState<ExternalTransferRecord | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<TransferAdmissionRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [confirmAction, setConfirmAction] = useState<{ record: ExternalTransferRecord; targetStatus: TransferStatus } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ExternalTransferRecord | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginatedResponse<TransferAdmissionRecord> | null>(null);
 
-  const filtered = records.filter(r =>
-    r.student.full_name.includes(searchQuery) || r.from_external_school_name.includes(searchQuery)
-  );
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [selectedYearId, setSelectedYearId] = useState<number | string>('');
 
-  const handleStatusUpdate = () => {
-    if (!confirmAction) return;
-    setRecords(prev => prev.map(r => r.id === confirmAction.record.id ? { ...r, status: confirmAction.targetStatus } : r));
-    setConfirmAction(null);
+  const [confirmAction, setConfirmAction] = useState<{ record: TransferAdmissionRecord; targetStatus: TransferStatus } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TransferAdmissionRecord | null>(null);
+
+  // For Registration Form
+  const [schools, setSchools] = useState<SchoolType[]>([]);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    school_number: '',
+    seat_number: '',
+    nationality: 'يمني',
+    gender: 'male',
+    date_of_birth: '',
+    place_of_birth: '',
+    from_external_school_name: '',
+    to_school_id: '',
+    class_id: '',
+    reason: ''
+  });
+
+  useEffect(() => {
+    fetchAcademicYears();
+    fetchSchools();
+    fetchClasses();
+  }, []);
+
+  useEffect(() => {
+    fetchExternalTransfers();
+  }, [selectedYearId, currentPage]);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const data = await academicYearService.getAcademicYears();
+      setAcademicYears(data);
+      const activeYear = data.find(y => y.status === 'active');
+      if (activeYear) setSelectedYearId(activeYear.id);
+    } catch (error) {
+      console.error('Error fetching academic years:', error);
+    }
   };
 
-  const handleDelete = () => {
+  const fetchSchools = async () => {
+    try {
+      const data = await schoolService.getSchools();
+      setSchools(data);
+    } catch (error) {
+      console.error('Error fetching schools:', error);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const data = await schoolClassService.getSchoolClasses();
+      setClasses(data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
+
+  const fetchExternalTransfers = async () => {
+    setIsLoading(true);
+    try {
+      // Backend Distinguishes external transfers by from_school_id being null and external name being present
+      const response = await transferService.getTransfers({
+        type: 'transfer',
+        search: searchQuery,
+        academic_year_id: selectedYearId ? Number(selectedYearId) : undefined,
+        page: currentPage
+      });
+      
+      // Filter only external ones (from_school_id is null)
+      // Actually, it might be better to just let the backend handle the type=admission or similar
+      // but based on the provided backend logic, type='transfer' with from_school_id=null is used for out region.
+      // Let's filter here for now if the API returns everything.
+      const externalOnly = (response.data || []).filter(r => r.from_school_id === null && r.from_external_school_name !== null);
+      setRecords(externalOnly);
+      setPagination(response);
+    } catch (error) {
+      console.error('Error fetching external transfers:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchExternalTransfers();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedYearId) {
+      alert('يرجى تحديد السنة الدراسية النشطة');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await transferService.registerExternalStudent({
+        ...formData,
+        academic_year_id: Number(selectedYearId),
+        to_school_id: Number(formData.to_school_id),
+        class_id: Number(formData.class_id)
+      });
+      setViewMode('list');
+      fetchExternalTransfers();
+      resetForm();
+    } catch (error) {
+      console.error('Error registering student:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      full_name: '',
+      school_number: '',
+      seat_number: '',
+      nationality: 'يمني',
+      gender: 'male',
+      date_of_birth: '',
+      place_of_birth: '',
+      from_external_school_name: '',
+      to_school_id: '',
+      class_id: '',
+      reason: ''
+    });
+  };
+
+  const handleExportPdf = async (id: number) => {
+    setPdfLoadingId(id);
+    try {
+      await transferService.downloadTransferPdf(id);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    } finally {
+      setPdfLoadingId(null);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!confirmAction) return;
+    try {
+      await transferService.updateStatus(confirmAction.record.id, {
+        status: confirmAction.targetStatus,
+        approval_date: confirmAction.targetStatus === 'approved' ? new Date().toISOString().split('T')[0] : undefined
+      });
+      fetchExternalTransfers();
+      setConfirmAction(null);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
-    setDeleteTarget(null);
+    try {
+      await transferService.deleteTransfer(deleteTarget.id);
+      fetchExternalTransfers();
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error('Error deleting transfer:', error);
+    }
   };
 
   if (viewingRecord) {
-    return <ShowExternal record={viewingRecord} onBack={() => setViewingRecord(null)} />;
+    return <ShowExternal record={viewingRecord} onBack={() => setViewingRecord(null)} onExportPdf={handleExportPdf} pdfLoadingId={pdfLoadingId} />;
   }
 
   if (viewMode === 'create') {
@@ -217,31 +343,80 @@ export const ExternalTransfers: React.FC = () => {
           </Button>
         </div>
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-          <form className="space-y-8">
+          <form className="space-y-8" onSubmit={handleRegisterSubmit}>
             <div>
               <h4 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-5"><User className="text-slate-400" size={18} />البيانات الأساسية للطالب</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[
-                  { label: 'الاسم الرباعي', placeholder: 'أدخل اسم الطالب رباعياً', required: true },
-                  { label: 'الرقم المدرسي / الوطني', placeholder: 'أدخل الرقم', required: true },
-                  { label: 'رقم الجلوس', placeholder: 'أدخل رقم الجلوس', required: true },
-                  { label: 'الجنسية', placeholder: 'مثال: يمني', required: true, defaultValue: 'يمني' },
-                  { label: 'مكان الميلاد', placeholder: 'مكان الميلاد', required: true },
-                ].map((f, i) => (
-                  <div key={i} className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">{f.label} {f.required && <span className="text-red-500">*</span>}</label>
-                    <Input placeholder={f.placeholder} defaultValue={f.defaultValue} className="bg-slate-50" />
-                  </div>
-                ))}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">الاسم الرباعي <span className="text-red-500">*</span></label>
+                  <Input 
+                    placeholder="أدخل اسم الطالب رباعياً" 
+                    required 
+                    className="bg-slate-50" 
+                    value={formData.full_name}
+                    onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">الرقم المدرسي / الوطني <span className="text-red-500">*</span></label>
+                  <Input 
+                    placeholder="أدخل الرقم" 
+                    required 
+                    className="bg-slate-50" 
+                    value={formData.school_number}
+                    onChange={e => setFormData({ ...formData, school_number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">رقم الجلوس <span className="text-red-500">*</span></label>
+                  <Input 
+                    placeholder="أدخل رقم الجلوس" 
+                    required 
+                    className="bg-slate-50" 
+                    value={formData.seat_number}
+                    onChange={e => setFormData({ ...formData, seat_number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">الجنسية <span className="text-red-500">*</span></label>
+                  <Input 
+                    placeholder="مثال: يمني" 
+                    required 
+                    className="bg-slate-50" 
+                    value={formData.nationality}
+                    onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">مكان الميلاد <span className="text-red-500">*</span></label>
+                  <Input 
+                    placeholder="مكان الميلاد" 
+                    required 
+                    className="bg-slate-50" 
+                    value={formData.place_of_birth}
+                    onChange={e => setFormData({ ...formData, place_of_birth: e.target.value })}
+                  />
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الجنس <span className="text-red-500">*</span></label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700">
-                    <option value="male">ذكر</option><option value="female">أنثى</option>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700"
+                    value={formData.gender}
+                    onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                  >
+                    <option value="male">ذكر</option>
+                    <option value="female">أنثى</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><Calendar size={13} />تاريخ الميلاد <span className="text-red-500">*</span></label>
-                  <Input type="date" className="bg-slate-50" />
+                  <Input 
+                    type="date" 
+                    className="bg-slate-50" 
+                    required
+                    value={formData.date_of_birth}
+                    onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  />
                 </div>
               </div>
             </div>
@@ -251,32 +426,55 @@ export const ExternalTransfers: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><MapPin size={13} />المدرسة السابقة (خارج المحافظة) <span className="text-red-500">*</span></label>
-                  <Input placeholder="مثال: مدرسة الوحدة الأساسية بصنعاء" className="bg-slate-50" />
+                  <Input 
+                    placeholder="مثال: مدرسة الوحدة الأساسية بصنعاء" 
+                    className="bg-slate-50" 
+                    required
+                    value={formData.from_external_school_name}
+                    onChange={e => setFormData({ ...formData, from_external_school_name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><School size={13} />المدرسة الموجه إليها <span className="text-red-500">*</span></label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700">
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700"
+                    required
+                    value={formData.to_school_id}
+                    onChange={e => setFormData({ ...formData, to_school_id: e.target.value })}
+                  >
                     <option value="">-- اختر المدرسة --</option>
-                    <option value="1">مدرسة التفوق</option><option value="2">مدرسة الأمل</option>
+                    {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الصف الدراسي <span className="text-red-500">*</span></label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700">
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700"
+                    required
+                    value={formData.class_id}
+                    onChange={e => setFormData({ ...formData, class_id: e.target.value })}
+                  >
                     <option value="">-- اختر الصف --</option>
-                    <option value="1">الصف الأول</option><option value="2">الصف الثاني</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><FileText size={13} />سبب التحويل (اختياري)</label>
-                  <textarea rows={3} placeholder="ملاحظات..." className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-primary text-slate-700 resize-none" />
+                  <textarea 
+                    rows={3} 
+                    placeholder="ملاحظات..." 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-primary text-slate-700 resize-none" 
+                    value={formData.reason}
+                    onChange={e => setFormData({ ...formData, reason: e.target.value })}
+                  />
                 </div>
               </div>
             </div>
             <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-              <Button type="button" onClick={() => setViewMode('list')} variant="outline" className="px-8 font-bold h-12 rounded-xl text-slate-600">إلغاء</Button>
-              <Button type="button" onClick={() => { setViewMode('list'); }} className="px-8 font-bold h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-                <CheckCircle2 size={17} />تسجيل وحفظ البيانات
+              <Button type="button" onClick={() => { setViewMode('list'); resetForm(); }} variant="outline" className="px-8 font-bold h-12 rounded-xl text-slate-600">إلغاء</Button>
+              <Button type="submit" disabled={isSubmitting} className="px-8 font-bold h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={17} />}
+                {isSubmitting ? 'جاري التسجيل...' : 'تسجيل وحفظ البيانات'}
               </Button>
             </div>
           </form>
@@ -287,14 +485,42 @@ export const ExternalTransfers: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <Input placeholder="بحث باسم الطالب أو المدرسة..." className="pr-10 bg-white" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <form onSubmit={handleSearch} className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Input 
+              placeholder="بحث باسم الطالب أو المدرسة..." 
+              className="pr-10 bg-white rounded-xl border-slate-200" 
+              value={searchQuery} 
+              onChange={e => setSearchQuery(e.target.value)} 
+            />
+          </div>
+          <Button type="submit" variant="secondary" className="rounded-xl">بحث</Button>
+        </form>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-sm w-full md:w-auto">
+            <Filter size={16} className="text-slate-400" />
+            <span className="text-slate-600 font-medium whitespace-nowrap">السنة الدراسية:</span>
+            <select 
+              className="bg-transparent border-none outline-none text-slate-800 font-bold pr-2 cursor-pointer w-full"
+              value={selectedYearId}
+              onChange={(e) => {
+                setSelectedYearId(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">كل السنوات</option>
+              {academicYears.map(year => (
+                <option key={year.id} value={year.id}>{year.year}</option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={() => setViewMode('create')} className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">
+            <UserPlus size={18} /> تسجيل طالب وافد
+          </Button>
         </div>
-        <Button onClick={() => setViewMode('create')} className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">
-          <UserPlus size={18} /> تسجيل طالب وافد
-        </Button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -311,10 +537,19 @@ export const ExternalTransfers: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-20 text-slate-500">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="animate-spin text-indigo-600" size={40} />
+                      <span className="font-bold text-indigo-600">جاري تحميل البيانات...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : records.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-10 text-slate-500">لا توجد سجلات مطابقة.</TableCell></TableRow>
               ) : (
-                filtered.map(t => {
+                records.map(t => {
                   const allowed = ALLOWED_TRANSITIONS[t.status];
                   const canDelete = t.status !== 'approved';
                   return (
@@ -327,15 +562,25 @@ export const ExternalTransfers: React.FC = () => {
                         <span className="flex items-center gap-1.5 text-slate-600 text-sm font-medium"><Globe size={13} className="text-slate-400" />{t.from_external_school_name}</span>
                       </TableCell>
                       <TableCell className="py-3 px-4">
-                        <span className="flex items-center gap-1.5 text-indigo-600 text-sm font-bold"><ArrowRight size={13} />{t.toSchool.name}</span>
+                        <span className="flex items-center gap-1.5 text-indigo-600 text-sm font-bold"><ArrowRight size={13} />{t.to_school?.name}</span>
                       </TableCell>
-                      <TableCell className="py-3 px-4 text-sm text-slate-700">{t.schoolClass.name}</TableCell>
+                      <TableCell className="py-3 px-4 text-sm text-slate-700">{t.school_class?.name}</TableCell>
                       <TableCell className="py-3 px-4 text-center"><StatusBadge status={t.status} /></TableCell>
                       <TableCell className="py-3 px-4">
                         <div className="flex items-center justify-center gap-1.5">
                           <button onClick={() => setViewingRecord(t)} title="عرض التفاصيل" className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
                             <Eye size={15} />
                           </button>
+                          {t.status === 'approved' && (
+                            <button
+                              onClick={() => handleExportPdf(t.id)}
+                              disabled={pdfLoadingId === t.id}
+                              className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                              title="تصدير PDF"
+                            >
+                              {pdfLoadingId === t.id ? <Loader2 className="animate-spin" size={15} /> : <FileDown size={15} />}
+                            </button>
+                          )}
                           {allowed.includes('approved') && (
                             <button onClick={() => setConfirmAction({ record: t, targetStatus: 'approved' })} title="قبول" className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">
                               <CheckCircle2 size={15} />
@@ -366,6 +611,57 @@ export const ExternalTransfers: React.FC = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.last_page > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="text-sm text-slate-500">
+              عرض {pagination.from} إلى {pagination.to} من إجمالي {pagination.total} سجل
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="gap-1 rounded-lg"
+              >
+                <ChevronRight size={16} />
+                السابق
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === pagination.last_page || Math.abs(p - currentPage) <= 1)
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-slate-400">...</span>}
+                      <Button
+                        variant={currentPage === p ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handlePageChange(p)}
+                        className={`w-9 h-9 p-0 rounded-lg ${currentPage === p ? 'shadow-md shadow-indigo/20' : ''}`}
+                      >
+                        {p}
+                      </Button>
+                    </React.Fragment>
+                  ))
+                }
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === pagination.last_page}
+                className="gap-1 rounded-lg"
+              >
+                التالي
+                <ChevronLeft size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {confirmAction && (

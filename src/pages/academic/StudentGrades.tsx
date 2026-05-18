@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2 } from 'lucide-react';
+import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2, FileDown } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/api/axios';
 import { hasPermission } from '@/services/authService';
 import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
+import { gradeService } from '@/services/gradeService';
 
 // Interfaces
 interface Student {
@@ -70,11 +72,27 @@ export const StudentGrades: React.FC = () => {
   // Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<StudentGradeRecord | null>(null);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null); // composite key like 'studentId-yearId'
+
+  const [searchParams] = useSearchParams();
 
   // Fetch data
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-open student record when student_id is in the URL
+  useEffect(() => {
+    const studentId = searchParams.get('student_id');
+    if (studentId && students.length > 0) {
+      const id = Number(studentId);
+      const student = students.find(s => s.id === id);
+      if (student) {
+        setSelectedStudentId(id);
+        setCurrentView('read');
+      }
+    }
+  }, [searchParams, students]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -117,8 +135,8 @@ export const StudentGrades: React.FC = () => {
         
         grouped.get(key)!.grades.push({
           subject_id: grade.subject_id,
-          first_semester: grade.first_semester_total ?? '',
-          second_semester: grade.second_semester_total ?? ''
+          first_semester: grade.first_semester_total !== null ? Number(grade.first_semester_total) : '',
+          second_semester: grade.second_semester_total !== null ? Number(grade.second_semester_total) : ''
         });
       });
       
@@ -253,10 +271,22 @@ export const StudentGrades: React.FC = () => {
       
       setCurrentView('index');
       setSelectedStudentId(null);
-    } catch (error) {
-      console.error('Error saving grades:', error);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleExportPdf = async (studentId: number, academicYearId: number, studentName: string) => {
+    const loadingKey = `${studentId}-${academicYearId}`;
+    setPdfLoadingId(loadingKey);
+    try {
+      await gradeService.downloadResultPdf(studentId, academicYearId, studentName);
+    } catch (error: any) {
+      console.error('Error exporting PDF:', error);
+      const message = error.response?.data?.message || 'حدث خطأ أثناء تصدير ملف الـ PDF. يرجى التأكد من رصد جميع الدرجات.';
+      alert(message);
+    } finally {
+      setPdfLoadingId(null);
     }
   };
 
@@ -373,6 +403,18 @@ export const StudentGrades: React.FC = () => {
                                   title="عرض جميع النتائج للطالب"
                                 >
                                   <Eye size={18} />
+                                </button>
+                                <button 
+                                  onClick={() => handleExportPdf(student.id, selectedYearFilter, student.full_name)}
+                                  disabled={pdfLoadingId === `${student.id}-${selectedYearFilter}`}
+                                  className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  title="تصدير النتيجة PDF"
+                                >
+                                  {pdfLoadingId === `${student.id}-${selectedYearFilter}` ? (
+                                    <Loader2 size={18} className="animate-spin text-emerald-600" />
+                                  ) : (
+                                    <FileDown size={18} />
+                                  )}
                                 </button>
                                 {canManage && (
                                   <>
@@ -597,8 +639,8 @@ export const StudentGrades: React.FC = () => {
               
               yearSubjects.forEach(subject => {
                 const grade = record.grades.find(g => g.subject_id === subject.id);
-                const first = typeof grade?.first_semester === 'number' ? grade.first_semester : 0;
-                const second = typeof grade?.second_semester === 'number' ? grade.second_semester : 0;
+                const first = (grade?.first_semester !== '' && grade?.first_semester !== undefined) ? Number(grade.first_semester) : 0;
+                const second = (grade?.second_semester !== '' && grade?.second_semester !== undefined) ? Number(grade.second_semester) : 0;
                 const total = first + second;
                 totalScore += total;
                 if (total < 50) hasFailedSubject = true;
@@ -630,6 +672,19 @@ export const StudentGrades: React.FC = () => {
                         }`}>
                           {hasFailedSubject ? 'راسب' : 'ناجح'}
                         </span>
+                        <Button 
+                          onClick={() => handleExportPdf(student!.id, record.academic_year_id, student!.full_name)}
+                          disabled={pdfLoadingId === `${student?.id}-${record.academic_year_id}`}
+                          variant="outline"
+                          className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 gap-2 rounded-xl"
+                        >
+                          {pdfLoadingId === `${student?.id}-${record.academic_year_id}` ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <FileDown size={16} />
+                          )}
+                          تصدير PDF
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -648,8 +703,8 @@ export const StudentGrades: React.FC = () => {
                       <tbody className="divide-y divide-slate-100">
                         {yearSubjects.map((subject) => {
                           const grade = record.grades.find(g => g.subject_id === subject.id);
-                          const first = typeof grade?.first_semester === 'number' ? grade.first_semester : 0;
-                          const second = typeof grade?.second_semester === 'number' ? grade.second_semester : 0;
+                          const first = (grade?.first_semester !== '' && grade?.first_semester !== undefined) ? Number(grade.first_semester) : 0;
+                          const second = (grade?.second_semester !== '' && grade?.second_semester !== undefined) ? Number(grade.second_semester) : 0;
                           const total = first + second;
                           
                           // Simple grading scale

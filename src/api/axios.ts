@@ -45,8 +45,12 @@ api.interceptors.response.use(
 
     // Handle global error toasts
     const message = error.response?.data?.message;
-    // Don't show toast for 422 if we want forms to handle them inline, 
-    // but typically a general error toast is good.
+
+    // Ignore connection errors for PDF/Blob requests if they already succeeded or if it's a timeout
+    if (error.config?.responseType === 'blob' && !error.response) {
+      return Promise.reject(error);
+    }
+
     if (message && error.response?.status !== 401) {
       toast(message, 'error');
     } else if (!error.response) {

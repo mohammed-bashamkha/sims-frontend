@@ -143,7 +143,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="mt-4">
               <p className="text-slate-500 text-sm font-medium">إجمالي الطلاب</p>
-              <h3 className="text-3xl font-bold text-slate-800 mt-1">{data.kpis.total_students.toLocaleString('ar-EG')}</h3>
+              <h3 className="text-3xl font-bold text-slate-800 mt-1">{data.kpis.total_students.toLocaleString('en-US')}</h3>
             </div>
           </CardContent>
         </Card>
@@ -158,7 +158,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="mt-4">
               <p className="text-slate-500 text-sm font-medium">المدارس الفعالة</p>
-              <h3 className="text-3xl font-bold text-slate-800 mt-1">{data.kpis.active_schools.toLocaleString('ar-EG')}</h3>
+              <h3 className="text-3xl font-bold text-slate-800 mt-1">{data.kpis.active_schools.toLocaleString('en-US')}</h3>
               <p className="text-slate-500 text-xs mt-2 font-medium">{data.kpis.schools_breakdown.government} حكومي · {data.kpis.schools_breakdown.private} أهلي</p>
             </div>
           </CardContent>
@@ -213,7 +213,7 @@ export const Dashboard: React.FC = () => {
               <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="text-slate-400"><ArrowRightLeft size={20} /></div>
-                  <span className="font-medium text-slate-700">طلبات نقل/قبول بانتظار مراجعتك</span>
+                  <span className="font-medium text-slate-700">طلبات النقل المعلقة بانتظار مراجعتك</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-bold text-slate-800">{data.needs_attention.transfers_awaiting_review}</span>
