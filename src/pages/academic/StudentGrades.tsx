@@ -14,10 +14,12 @@ interface Student {
   full_name: string;
   school_number: string;
   current_enrollment?: {
+    school_id?: number;
     class_id: number;
     academic_year_id: number;
   };
   enrollments?: Array<{
+    school_id?: number;
     class_id: number;
     academic_year_id: number;
   }>;
@@ -32,7 +34,8 @@ interface Subject {
 interface AcademicYear {
   id: number;
   year: string;
-  is_current: boolean;
+  is_current?: boolean;
+  status?: string;
 }
 
 interface GradeEntry {
@@ -60,6 +63,16 @@ export const StudentGrades: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYearFilter, setSelectedYearFilter] = useState<number>(0);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedGender, setSelectedGender] = useState<string>('');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const [schools, setSchools] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   
   // View states: 'index' | 'create' | 'edit' | 'read'
   const [currentView, setCurrentView] = useState<'index' | 'create' | 'edit' | 'read'>('index');
@@ -97,50 +110,37 @@ export const StudentGrades: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [gradesRes, studentsRes, subjectsRes, yearsRes] = await Promise.all([
-        api.get('/grades'),
-        api.get('/students'),
+      const [subjectsRes, yearsRes, schoolsRes, classesRes] = await Promise.all([
         api.get('/subjects'),
-        api.get('/academic-years')
+        api.get('/academic-years'),
+        api.get('/schools'),
+        api.get('/school-classes')
       ]);
 
-      const yearsData: AcademicYear[] = yearsRes.data.data || yearsRes.data;
+      let yearsData: AcademicYear[] = yearsRes.data.data || yearsRes.data;
+      
+      // Sort yearsData to put active year first
+      yearsData.sort((a, b) => {
+        const aActive = a.is_current || a.status === 'active';
+        const bActive = b.is_current || b.status === 'active';
+        if (aActive && !bActive) return -1;
+        if (!aActive && bActive) return 1;
+        return b.id - a.id;
+      });
+
       const subjectsData = subjectsRes.data.data || subjectsRes.data;
 
-      setStudents(studentsRes.data.data || studentsRes.data);
       setSubjects(subjectsData);
       setAcademicYears(yearsData);
+      setSchools(schoolsRes.data.data || schoolsRes.data || []);
+      setClasses(classesRes.data.data || classesRes.data || []);
 
-      const currentYear = yearsData.find((y: AcademicYear) => y.is_current);
+      const currentYear = yearsData[0]; // Active year is now first
       if (currentYear && selectedYearFilter === 0) {
         setSelectedYearFilter(currentYear.id);
       } else if (yearsData.length > 0 && selectedYearFilter === 0) {
         setSelectedYearFilter(yearsData[0].id);
       }
-
-      // Transform flat grades into StudentGradeRecord array
-      const flatGrades = gradesRes.data;
-      const grouped = new Map<string, StudentGradeRecord>();
-      
-      flatGrades.forEach((grade: any) => {
-        const key = `${grade.student_id}-${grade.academic_year_id}`;
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            id: grade.id,
-            student_id: grade.student_id,
-            academic_year_id: grade.academic_year_id,
-            grades: []
-          });
-        }
-        
-        grouped.get(key)!.grades.push({
-          subject_id: grade.subject_id,
-          first_semester: grade.first_semester_total !== null ? Number(grade.first_semester_total) : '',
-          second_semester: grade.second_semester_total !== null ? Number(grade.second_semester_total) : ''
-        });
-      });
-      
-      setRecords(Array.from(grouped.values()));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -149,17 +149,85 @@ export const StudentGrades: React.FC = () => {
   };
 
   // Helpers
+  const getRecord = (studentId: number, yearId: number) => records.find(r => r.student_id === studentId && r.academic_year_id === yearId);
+  const getAcademicYear = (id: number) => academicYears.find(y => y.id === id);
   const getStudent = (id: number) => students.find(s => s.id === id);
   const getSubjectsForClass = (classId: number) => subjects.filter(s => 
     s.school_classes?.some((c: any) => c.id === classId)
   );
-  const getAcademicYear = (id: number) => academicYears.find(y => y.id === id);
-  const getRecord = (studentId: number, yearId: number) => records.find(r => r.student_id === studentId && r.academic_year_id === yearId);
+  const fetchStudentsList = async () => {
+    try {
+      setLoading(true);
+      const params: any = { page: currentPage };
+      if (searchQuery) params.search = searchQuery;
+      if (selectedYearFilter) params.academic_year_id = selectedYearFilter;
+      if (selectedSchoolId) params.school_id = selectedSchoolId;
+      if (selectedClassId) params.class_id = selectedClassId;
+      if (selectedGender) params.gender = selectedGender;
 
-  // Filter students based on search
-  const filteredStudents = students.filter(s => 
-    s.full_name?.includes(searchQuery) || s.school_number?.includes(searchQuery)
-  );
+      const res = await api.get('/students', { params });
+      const data = res.data.data || res.data;
+      const meta = res.data.meta || res.data;
+      
+      setStudents(data);
+      setLastPage(meta.last_page || 1);
+      setTotalRecords(meta.total || data.length);
+
+      // Fetch grades for these students
+      if (data.length > 0) {
+        const studentIds = data.map((s: Student) => s.id);
+        const gradesRes = await api.get('/grades', {
+          params: { student_ids: studentIds } // Fetch all grades for these students across all years
+        });
+        
+        const flatGrades = gradesRes.data;
+        const grouped = new Map<string, StudentGradeRecord>();
+        
+        flatGrades.forEach((grade: any) => {
+          const key = `${grade.student_id}-${grade.academic_year_id}`;
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              id: grade.id,
+              student_id: grade.student_id,
+              academic_year_id: grade.academic_year_id,
+              grades: []
+            });
+          }
+          
+          grouped.get(key)!.grades.push({
+            subject_id: grade.subject_id,
+            first_semester: grade.first_semester_total !== null ? Number(grade.first_semester_total) : '',
+            second_semester: grade.second_semester_total !== null ? Number(grade.second_semester_total) : ''
+          });
+        });
+        
+        setRecords(Array.from(grouped.values()));
+      } else {
+        setRecords([]);
+      }
+
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedYearFilter === 0) return;
+    const timer = setTimeout(() => {
+      fetchStudentsList();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentPage, searchQuery, selectedYearFilter, selectedSchoolId, selectedClassId, selectedGender]);
+
+  const handleFilterChange = (setter: any, value: any) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
+  // Filter students based on search and filters (now mostly handled by backend, but kept for local overrides if needed)
+  const filteredStudents = students;
 
   const handleCreate = (studentId: number) => {
     setSelectedStudentId(studentId);
@@ -230,7 +298,7 @@ export const StudentGrades: React.FC = () => {
     setSubmitting(true);
     try {
       await api.delete(`/grades/bulk/${recordToDelete.student_id}/${recordToDelete.academic_year_id}`);
-      await fetchData();
+      await fetchStudentsList();
       setIsDeleteModalOpen(false);
       setRecordToDelete(null);
     } catch (error) {
@@ -267,7 +335,8 @@ export const StudentGrades: React.FC = () => {
       };
 
       await api.post('/grades/bulk', payload);
-      await fetchData();
+      // Re-fetch students and grades to update the UI
+      await fetchStudentsList();
       
       setCurrentView('index');
       setSelectedStudentId(null);
@@ -326,20 +395,56 @@ export const StudentGrades: React.FC = () => {
               placeholder="البحث باسم الطالب أو الرقم المدرسي..." 
               className="pr-10 bg-white rounded-xl border-slate-200"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleFilterChange(setSearchQuery, e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="text-slate-400" size={18} />
+          
+          <div className="flex flex-wrap items-center gap-2">
             <select 
-              className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-              value={selectedYearFilter}
-              onChange={(e) => setSelectedYearFilter(Number(e.target.value))}
+              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              value={selectedSchoolId}
+              onChange={(e) => handleFilterChange(setSelectedSchoolId, e.target.value)}
             >
-              {academicYears.map((y: AcademicYear) => (
-                <option key={y.id} value={y.id}>{y.year}</option>
-              ))}
+              <option value="">كل المدارس</option>
+              {schools.map(school => <option key={school.id} value={school.id}>{school.name}</option>)}
             </select>
+
+            <select 
+              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              value={selectedClassId}
+              onChange={(e) => handleFilterChange(setSelectedClassId, e.target.value)}
+            >
+              <option value="">كل الصفوف</option>
+              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+
+            <select 
+              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              value={selectedGender}
+              onChange={(e) => handleFilterChange(setSelectedGender, e.target.value)}
+            >
+              <option value="">الجنس (الكل)</option>
+              <option value="male">ذكر</option>
+              <option value="female">أنثى</option>
+            </select>
+
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2">
+              <Calendar className="text-slate-400" size={18} />
+              <select 
+                className="bg-transparent text-sm outline-none font-bold text-slate-700"
+                value={selectedYearFilter}
+                onChange={(e) => handleFilterChange(setSelectedYearFilter, Number(e.target.value))}
+              >
+                {academicYears.map((y: AcademicYear) => {
+                  const isActive = y.is_current || y.status === 'active';
+                  return (
+                    <option key={y.id} value={y.id}>
+                      {y.year} {isActive ? '(النشطة)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -464,10 +569,40 @@ export const StudentGrades: React.FC = () => {
               </tbody>
             </table>
           </div>
-          {loading && (
+          {loading && students.length === 0 && (
             <div className="flex flex-col items-center justify-center p-12 bg-white border-t border-slate-100">
               <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
               <p className="text-slate-500 font-medium">جاري تحميل البيانات...</p>
+            </div>
+          )}
+          {lastPage > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <div className="text-sm text-slate-500">
+                إجمالي {totalRecords} طالب
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                  disabled={currentPage === 1 || loading}
+                  className="gap-1"
+                >
+                  <ArrowRight size={16} /> السابق
+                </Button>
+                <div className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700">
+                  {currentPage} / {lastPage}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))} 
+                  disabled={currentPage === lastPage || loading}
+                  className="gap-1"
+                >
+                  التالي <ArrowRight size={16} className="rotate-180" />
+                </Button>
+              </div>
             </div>
           )}
         </div>

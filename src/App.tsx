@@ -35,6 +35,8 @@ import { ImportStudents } from './pages/academic/ImportStudents';
 import { ImportFinalResults } from './pages/academic/ImportFinalResults';
 import { ExportStudents } from './pages/academic/ExportStudents';
 import { Unauthorized } from './pages/Unauthorized';
+import { StudentsReports } from './pages/StudentsReports';
+
 import { Toaster } from './components/ui/Toaster';
 
 function App() {
@@ -87,6 +89,9 @@ function App() {
             <Route element={<ProtectedRoute allowedPermission="المدارس.تعديل" />}>
               <Route path="schools/edit/:id" element={<EditSchool />} />
             </Route>
+
+            {/* ── Reports ── */}
+            <Route path="reports" element={<StudentsReports />} />
 
             {/* ── Transfers & Admissions ── */}
             <Route path="transfers" element={<TransfersIndex />} />

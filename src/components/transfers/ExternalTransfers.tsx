@@ -153,6 +153,9 @@ export const ExternalTransfers: React.FC = () => {
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedGender, setSelectedGender] = useState<string>('');
 
   const [confirmAction, setConfirmAction] = useState<{ record: TransferAdmissionRecord; targetStatus: TransferStatus } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TransferAdmissionRecord | null>(null);
@@ -184,7 +187,7 @@ export const ExternalTransfers: React.FC = () => {
 
   useEffect(() => {
     fetchExternalTransfers();
-  }, [selectedYearId, currentPage]);
+  }, [selectedYearId, selectedSchoolId, selectedClassId, selectedGender, currentPage]);
 
   const fetchAcademicYears = async () => {
     try {
@@ -223,6 +226,9 @@ export const ExternalTransfers: React.FC = () => {
         type: 'transfer',
         search: searchQuery,
         academic_year_id: selectedYearId ? Number(selectedYearId) : undefined,
+        school_id: selectedSchoolId ? Number(selectedSchoolId) : undefined,
+        class_id: selectedClassId ? Number(selectedClassId) : undefined,
+        gender: selectedGender || undefined,
         page: currentPage
       });
       
@@ -499,25 +505,48 @@ export const ExternalTransfers: React.FC = () => {
           <Button type="submit" variant="secondary" className="rounded-xl">بحث</Button>
         </form>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-sm w-full md:w-auto">
-            <Filter size={16} className="text-slate-400" />
-            <span className="text-slate-600 font-medium whitespace-nowrap">السنة الدراسية:</span>
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto mt-4 md:mt-0">
+          <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 text-sm w-full xl:w-auto">
+            <Filter size={16} className="text-slate-400 hidden sm:block" />
+            
             <select 
-              className="bg-transparent border-none outline-none text-slate-800 font-bold pr-2 cursor-pointer w-full"
+              className="bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-700 font-medium px-2 py-1.5 flex-1 sm:flex-none"
               value={selectedYearId}
-              onChange={(e) => {
-                setSelectedYearId(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => { setSelectedYearId(e.target.value); setCurrentPage(1); }}
             >
               <option value="">كل السنوات</option>
-              {academicYears.map(year => (
-                <option key={year.id} value={year.id}>{year.year}</option>
-              ))}
+              {academicYears.map(year => <option key={year.id} value={year.id}>{year.year}</option>)}
+            </select>
+
+            <select 
+              className="bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-700 font-medium px-2 py-1.5 flex-1 sm:flex-none"
+              value={selectedSchoolId}
+              onChange={(e) => { setSelectedSchoolId(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="">كل المدارس</option>
+              {schools.map(school => <option key={school.id} value={school.id}>{school.name}</option>)}
+            </select>
+
+            <select 
+              className="bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-700 font-medium px-2 py-1.5 flex-1 sm:flex-none"
+              value={selectedClassId}
+              onChange={(e) => { setSelectedClassId(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="">كل الصفوف</option>
+              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+
+            <select 
+              className="bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-700 font-medium px-2 py-1.5 flex-1 sm:flex-none"
+              value={selectedGender}
+              onChange={(e) => { setSelectedGender(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="">الجنس (الكل)</option>
+              <option value="male">ذكر</option>
+              <option value="female">أنثى</option>
             </select>
           </div>
-          <Button onClick={() => setViewMode('create')} className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">
+          <Button onClick={() => setViewMode('create')} className="w-full sm:w-auto gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm whitespace-nowrap">
             <UserPlus size={18} /> تسجيل طالب وافد
           </Button>
         </div>

@@ -94,7 +94,7 @@ export const DashboardLayout: React.FC = () => {
                 <BookOpen size={20} />
                 <span>الشؤون الأكاديمية</span>
               </Link>
-              <Link to="/reports" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white">
+              <Link to="/reports" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/reports') && "bg-primary text-white")}>
                 <BarChart3 size={20} />
                 <span>التقارير والإحصاءات</span>
               </Link>

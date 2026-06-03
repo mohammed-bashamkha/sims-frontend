@@ -80,6 +80,9 @@ export const transferService = {
     page?: number;
     academic_year_id?: number;
     to_school_id?: number;
+    school_id?: number;
+    class_id?: number;
+    gender?: string;
   }) => {
     const response = await api.get<PaginatedResponse<TransferAdmissionRecord>>('/transfers-admissions', { params });
     return response.data;

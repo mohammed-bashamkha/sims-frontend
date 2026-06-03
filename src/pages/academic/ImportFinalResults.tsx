@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UploadCloud, AlertTriangle, FileUp, Loader2 } from 'lucide-react';
+import { UploadCloud, AlertTriangle, FileUp, Loader2, User } from 'lucide-react';
 
 interface FormOptions {
   schools: { id: number; name: string }[];
   school_classes: { id: number; name: string }[];
-  academicYears: { id: number; year: string; is_active: boolean }[];
+  academicYears: { id: number; year: string; status: string }[];
 }
 
 export const ImportFinalResults: React.FC = () => {
@@ -28,13 +28,16 @@ export const ImportFinalResults: React.FC = () => {
   useEffect(() => {
     // We can use the students import form endpoint to get the dropdown options efficiently
     api.get('/students/import')
-      .then(res => setOptions(res.data))
+      .then(res => {
+        const data = res.data.data || res.data;
+        setOptions(data);
+      })
       .catch(err => console.error("Error loading form options", err));
   }, []);
 
   useEffect(() => {
     if (options?.academicYears) {
-      const activeYear = options.academicYears.find(y => y.is_active);
+      const activeYear = options.academicYears.find(y => y.status === 'active');
       if (activeYear && !academicYearId) {
         setAcademicYearId(activeYear.id.toString());
       }
@@ -111,11 +114,14 @@ export const ImportFinalResults: React.FC = () => {
                     <SelectValue placeholder="اختر السنة الدراسية" />
                   </SelectTrigger>
                   <SelectContent>
-                    {options?.academicYears.map(year => (
-                      <SelectItem key={year.id} value={year.id.toString()}>
-                        {year.year} {year.is_active && "(الحالية)"}
-                      </SelectItem>
-                    ))}
+                    {(options?.academicYears || [])
+                      .slice()
+                      .sort((a, b) => (b.status === 'active' ? 1 : 0) - (a.status === 'active' ? 1 : 0))
+                      .map(year => (
+                        <SelectItem key={year.id} value={year.id.toString()}>
+                          {year.year} {year.status === 'active' && "(الحالية)"}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -228,35 +234,109 @@ export const ImportFinalResults: React.FC = () => {
                       <p className="text-slate-500 text-xs mb-1">الصفوف المقروءة</p>
                       <p className="text-2xl font-bold text-slate-800">{report.summary.total_rows}</p>
                     </div>
-                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center shadow-sm">
-                      <p className="text-green-600 text-xs mb-1">ناجح</p>
-                      <p className="text-2xl font-bold text-green-700">{report.summary.successful}</p>
+                    <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 text-center shadow-sm">
+                      <p className="text-emerald-600 text-xs mb-1">ناجح</p>
+                      <p className="text-2xl font-bold text-emerald-700">{report.summary.successful}</p>
                     </div>
                     <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center shadow-sm">
                       <p className="text-red-600 text-xs mb-1">فشل</p>
                       <p className="text-2xl font-bold text-red-700">{report.summary.failed}</p>
                     </div>
                     <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center shadow-sm">
-                      <p className="text-orange-600 text-xs mb-1">متخطي (سجلات فارغة)</p>
+                      <p className="text-orange-600 text-xs mb-1">متخطي</p>
                       <p className="text-2xl font-bold text-orange-700">{report.summary.skipped}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Statistics Section */}
+                {report.summary && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center shadow-sm">
+                      <p className="text-blue-600 text-xs mb-1">طلاب جدد</p>
+                      <p className="text-xl font-bold text-blue-700">{report.summary.students_created || 0}</p>
+                    </div>
+                    <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center shadow-sm">
+                      <p className="text-indigo-600 text-xs mb-1">طلاب تم تحديثهم</p>
+                      <p className="text-xl font-bold text-indigo-700">{report.summary.students_updated || 0}</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 text-center shadow-sm">
+                      <p className="text-purple-600 text-xs mb-1">قيود جديدة</p>
+                      <p className="text-xl font-bold text-purple-700">{report.summary.enrollments_created || 0}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Processing Errors */}
                 {report.errors && report.errors.length > 0 && (
-                  <div className="bg-white rounded-xl border border-red-200 overflow-hidden mt-4">
+                  <div className="bg-white rounded-xl border border-red-200 overflow-hidden mt-4 shadow-sm">
                     <div className="bg-red-50 px-4 py-3 border-b border-red-100 flex items-center gap-2 text-red-700 font-semibold">
                       <AlertTriangle className="w-5 h-5" />
                       أخطاء في البيانات ({report.errors.length})
                     </div>
                     <div className="max-h-64 overflow-y-auto p-4 space-y-2">
                       {report.errors.map((err: any, i: number) => (
-                        <div key={i} className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                        <div key={i} className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
                           <strong>الصف {err.row}:</strong> {err.message}
                           {err.values && err.values.student_name && ` (الطالب: ${err.values.student_name})`}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Warnings */}
+                {report.warnings && report.warnings.length > 0 && (
+                  <div className="bg-white rounded-xl border border-amber-200 overflow-hidden mt-4 shadow-sm">
+                    <div className="bg-amber-50 px-4 py-3 border-b border-amber-100 flex items-center gap-2 text-amber-700 font-semibold">
+                      <AlertTriangle className="w-5 h-5" />
+                      ملاحظات وتحذيرات ({report.warnings.length})
+                    </div>
+                    <div className="max-h-64 overflow-y-auto p-4 space-y-2">
+                      {report.warnings.map((warn: string, i: number) => (
+                        <div key={i} className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                          {warn}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Processed Students Sample */}
+                {report.processed_students && report.processed_students.length > 0 && (
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mt-4 shadow-sm">
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between text-slate-700 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <User className="w-5 h-5 text-slate-500" />
+                        عينة من الطلاب الذين تمت معالجتهم ({report.processed_students.length})
+                      </div>
+                      <span className="text-xs text-slate-500 font-normal">يعرض أول 15 طالباً</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-right text-slate-600">
+                        <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 font-bold">الرقم المدرسي</th>
+                            <th scope="col" className="px-6 py-3 font-bold">اسم الطالب</th>
+                            <th scope="col" className="px-6 py-3 font-bold">الحالة</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.processed_students.map((student: any, i: number) => (
+                            <tr key={i} className="bg-white border-b hover:bg-slate-50">
+                              <td className="px-6 py-3 font-mono">{student.student_number}</td>
+                              <td className="px-6 py-3 font-medium text-slate-900">{student.student_name}</td>
+                              <td className="px-6 py-3">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                  student.status === 'جديد' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {student.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
