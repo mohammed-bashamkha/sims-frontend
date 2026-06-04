@@ -14,6 +14,12 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))"
         },
+        fontFamily: {
+        // خط القائمة الجانبية والعناوين
+        readex: ['"Readex Pro"', 'sans-serif'],
+        // خط الصفحات والمحتوى الداخلي الأساسي
+        ibm: ['"IBM Plex Sans Arabic"', 'sans-serif'],
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
