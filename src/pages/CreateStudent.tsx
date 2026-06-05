@@ -4,12 +4,13 @@ import { UserPlus, ChevronLeft, Loader2 } from 'lucide-react';
 import { StudentForm, type StudentFormData } from '@/components/students/StudentForm';
 import api from '@/api/axios';
 import { toast } from '@/store/toastStore';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const CreateStudent: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const { errors, clearErrors, handleApiError } = useFormErrors();
   
   const [options, setOptions] = useState<{
     schools: any[];
@@ -43,18 +44,13 @@ export const CreateStudent: React.FC = () => {
 
   const handleSubmit = async (data: StudentFormData) => {
     setIsLoading(true);
-    setErrors({});
+    clearErrors();
     try {
       await api.post('/students', data);
       toast('تم تسجيل الطالب بنجاح!', 'success');
       navigate('/students');
     } catch (error: any) {
-      if (error.response?.status === 422) {
-        setErrors(error.response.data.errors || {});
-        toast('يرجى التحقق من صحة البيانات المدخلة', 'error');
-      } else {
-        toast(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات', 'error');
-      }
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

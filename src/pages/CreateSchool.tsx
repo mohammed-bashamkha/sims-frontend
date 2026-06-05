@@ -4,18 +4,21 @@ import { Building2, ChevronLeft } from 'lucide-react';
 import { SchoolForm } from '@/components/schools/SchoolForm';
 import { schoolService } from '@/services/schoolService';
 import type { SchoolFormData } from '@/types/school';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const CreateSchool: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { errors, clearErrors, handleApiError } = useFormErrors();
 
   const handleSubmit = async (data: SchoolFormData) => {
     try {
       setIsLoading(true);
+      clearErrors();
       await schoolService.createSchool(data);
       navigate('/schools');
-    } catch (error) {
-      console.error('Failed to create school:', error);
+    } catch (error: any) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +49,7 @@ export const CreateSchool: React.FC = () => {
       <SchoolForm 
         onSubmit={handleSubmit} 
         isLoading={isLoading} 
+        errors={errors}
       />
 
     </div>

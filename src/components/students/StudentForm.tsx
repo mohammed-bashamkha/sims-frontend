@@ -98,7 +98,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="full_name"
                 value={formData.full_name}
                 onChange={handleChange}
-                required 
                 placeholder="الاسم الأول، اسم الأب، الجد، اللقب"
                 className={`w-full border ${errors.full_name ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               />
@@ -123,7 +122,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                required
                 className={`w-full border ${errors.gender ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
               >
                 <option value="male">ذكر</option>
@@ -175,7 +173,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   name="school_number"
                   value={formData.school_number}
                   onChange={handleChange}
-                  required 
                   className={`w-full border ${errors.school_number ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 />
                 {errors.school_number && <p className="text-xs text-red-500 mt-1">{errors.school_number[0]}</p>}
@@ -188,7 +185,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   name="seat_number"
                   value={formData.seat_number}
                   onChange={handleChange}
-                  required 
                   className={`w-full border ${errors.seat_number ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 />
                 {errors.seat_number && <p className="text-xs text-red-500 mt-1">{errors.seat_number[0]}</p>}
@@ -200,7 +196,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   name="school_id"
                   value={formData.school_id}
                   onChange={handleChange}
-                  required
                   className={`w-full border ${errors.school_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 >
                   <option value="">اختر المدرسة...</option>
@@ -217,7 +212,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   name="class_id"
                   value={formData.class_id}
                   onChange={handleChange}
-                  required
                   className={`w-full border ${errors.class_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary`}
                 >
                   <option value="">اختر الصف...</option>
@@ -234,7 +228,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                   name="academic_year_id"
                   value={formData.academic_year_id}
                   onChange={handleChange}
-                  required
                   className={`w-full border ${errors.academic_year_id ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:border-primary bg-slate-50`}
                 >
                   <option value="">اختر العام...</option>
@@ -263,7 +256,6 @@ export const StudentForm: React.FC<StudentFormProps> = ({
                 name="reason"
                 value={formData.reason}
                 onChange={handleChange}
-                required={isEditing}
                 rows={2}
                 placeholder="مثال: تصحيح خطأ إملائي في اسم الطالب..."
                 className={`w-full border ${errors.reason ? 'border-red-400' : 'border-amber-200'} rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white`}

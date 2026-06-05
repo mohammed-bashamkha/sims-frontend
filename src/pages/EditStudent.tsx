@@ -4,6 +4,7 @@ import { UserCog, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { StudentForm, type StudentFormData } from '@/components/students/StudentForm';
 import api from '@/api/axios';
 import { toast } from '@/store/toastStore';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const EditStudent: React.FC = () => {
   const { id } = useParams();
@@ -16,7 +17,7 @@ export const EditStudent: React.FC = () => {
     classes: any[];
     years: any[];
   }>({ schools: [], classes: [], years: [] });
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const { errors, clearErrors, handleApiError } = useFormErrors();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,18 +67,13 @@ export const EditStudent: React.FC = () => {
 
   const handleSubmit = async (data: StudentFormData) => {
     setIsLoading(true);
-    setErrors({});
+    clearErrors();
     try {
       await api.put(`/students/${id}`, data);
       toast('تم تعديل بيانات الطالب بنجاح!', 'success');
       navigate('/students');
     } catch (error: any) {
-      if (error.response?.status === 422) {
-        setErrors(error.response.data.errors || {});
-        toast('يرجى التحقق من صحة البيانات المدخلة', 'error');
-      } else {
-        toast(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات', 'error');
-      }
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

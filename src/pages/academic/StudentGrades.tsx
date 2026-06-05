@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2, FileDown } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import api from '@/api/axios';
@@ -85,6 +86,8 @@ export const StudentGrades: React.FC = () => {
   // Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<StudentGradeRecord | null>(null);
+
+  const { errors, handleApiError, clearErrors } = useFormErrors();
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null); // composite key like 'studentId-yearId'
 
   const [searchParams] = useSearchParams();
@@ -322,6 +325,7 @@ export const StudentGrades: React.FC = () => {
     e.preventDefault();
     if (!selectedStudentId) return;
 
+    clearErrors();
     setSubmitting(true);
     try {
       const payload = {
@@ -340,6 +344,8 @@ export const StudentGrades: React.FC = () => {
       
       setCurrentView('index');
       setSelectedStudentId(null);
+    } catch (error: any) {
+      handleApiError(error);
     } finally {
       setSubmitting(false);
     }
@@ -665,7 +671,7 @@ export const StudentGrades: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {subjects.map((subject) => {
+                {subjects.map((subject, index) => {
                   const grade = gradeForm.find(g => g.subject_id === subject.id);
                   const total = (typeof grade?.first_semester === 'number' ? grade.first_semester : 0) + 
                                (typeof grade?.second_semester === 'number' ? grade.second_semester : 0);
@@ -678,24 +684,24 @@ export const StudentGrades: React.FC = () => {
                           type="number"
                           min="0"
                           max="50"
-                          required
                           value={grade?.first_semester === '' ? '' : grade?.first_semester}
                           onChange={(e) => handleGradeChange(subject.id, 'first_semester', e.target.value)}
                           className="text-center font-bold font-mono"
                           dir="ltr"
                         />
+                        {errors[`grades.${index}.first_semester`] && <div className="text-xs text-red-500 font-medium mt-1">{errors[`grades.${index}.first_semester`][0]}</div>}
                       </td>
                       <td className="px-6 py-4">
                         <Input 
                           type="number"
                           min="0"
                           max="50"
-                          required
                           value={grade?.second_semester === '' ? '' : grade?.second_semester}
                           onChange={(e) => handleGradeChange(subject.id, 'second_semester', e.target.value)}
                           className="text-center font-bold font-mono"
                           dir="ltr"
                         />
+                        {errors[`grades.${index}.second_semester`] && <div className="text-xs text-red-500 font-medium mt-1">{errors[`grades.${index}.second_semester`][0]}</div>}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className={`inline-flex items-center justify-center w-12 h-8 rounded-lg font-bold ${

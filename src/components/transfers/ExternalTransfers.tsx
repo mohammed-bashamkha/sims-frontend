@@ -12,6 +12,7 @@ import { academicYearService, type AcademicYear } from '@/services/academicYearS
 import { schoolService } from '@/services/schoolService';
 import { schoolClassService, type SchoolClass } from '@/services/schoolClassService';
 import { type School as SchoolType } from '@/types/school';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 const ALLOWED_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
   pending:  ['approved', 'rejected'],
@@ -151,6 +152,8 @@ export const ExternalTransfers: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginatedResponse<TransferAdmissionRecord> | null>(null);
 
+  const { errors, handleApiError, clearErrors } = useFormErrors();
+
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
@@ -262,6 +265,7 @@ export const ExternalTransfers: React.FC = () => {
       alert('يرجى تحديد السنة الدراسية النشطة');
       return;
     }
+    clearErrors();
     setIsSubmitting(true);
     try {
       await transferService.registerExternalStudent({
@@ -275,6 +279,7 @@ export const ExternalTransfers: React.FC = () => {
       resetForm();
     } catch (error) {
       console.error('Error registering student:', error);
+      handleApiError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -357,51 +362,51 @@ export const ExternalTransfers: React.FC = () => {
                   <label className="text-sm font-bold text-slate-700">الاسم الرباعي <span className="text-red-500">*</span></label>
                   <Input 
                     placeholder="أدخل اسم الطالب رباعياً" 
-                    required 
                     className="bg-slate-50" 
                     value={formData.full_name}
                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                   />
+                  {errors.full_name && <span className="text-xs text-red-500 font-medium">{errors.full_name[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الرقم المدرسي / الوطني <span className="text-red-500">*</span></label>
                   <Input 
                     placeholder="أدخل الرقم" 
-                    required 
                     className="bg-slate-50" 
                     value={formData.school_number}
                     onChange={e => setFormData({ ...formData, school_number: e.target.value })}
                   />
+                  {errors.school_number && <span className="text-xs text-red-500 font-medium">{errors.school_number[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">رقم الجلوس <span className="text-red-500">*</span></label>
                   <Input 
                     placeholder="أدخل رقم الجلوس" 
-                    required 
                     className="bg-slate-50" 
                     value={formData.seat_number}
                     onChange={e => setFormData({ ...formData, seat_number: e.target.value })}
                   />
+                  {errors.seat_number && <span className="text-xs text-red-500 font-medium">{errors.seat_number[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الجنسية <span className="text-red-500">*</span></label>
                   <Input 
                     placeholder="مثال: يمني" 
-                    required 
                     className="bg-slate-50" 
                     value={formData.nationality}
                     onChange={e => setFormData({ ...formData, nationality: e.target.value })}
                   />
+                  {errors.nationality && <span className="text-xs text-red-500 font-medium">{errors.nationality[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">مكان الميلاد <span className="text-red-500">*</span></label>
                   <Input 
                     placeholder="مكان الميلاد" 
-                    required 
                     className="bg-slate-50" 
                     value={formData.place_of_birth}
                     onChange={e => setFormData({ ...formData, place_of_birth: e.target.value })}
                   />
+                  {errors.place_of_birth && <span className="text-xs text-red-500 font-medium">{errors.place_of_birth[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الجنس <span className="text-red-500">*</span></label>
@@ -419,10 +424,10 @@ export const ExternalTransfers: React.FC = () => {
                   <Input 
                     type="date" 
                     className="bg-slate-50" 
-                    required
                     value={formData.date_of_birth}
                     onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })}
                   />
+                  {errors.date_of_birth && <span className="text-xs text-red-500 font-medium">{errors.date_of_birth[0]}</span>}
                 </div>
               </div>
             </div>
@@ -435,34 +440,34 @@ export const ExternalTransfers: React.FC = () => {
                   <Input 
                     placeholder="مثال: مدرسة الوحدة الأساسية بصنعاء" 
                     className="bg-slate-50" 
-                    required
                     value={formData.from_external_school_name}
                     onChange={e => setFormData({ ...formData, from_external_school_name: e.target.value })}
                   />
+                  {errors.from_external_school_name && <span className="text-xs text-red-500 font-medium">{errors.from_external_school_name[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><School size={13} />المدرسة الموجه إليها <span className="text-red-500">*</span></label>
                   <select 
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700"
-                    required
                     value={formData.to_school_id}
                     onChange={e => setFormData({ ...formData, to_school_id: e.target.value })}
                   >
                     <option value="">-- اختر المدرسة --</option>
                     {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
+                  {errors.to_school_id && <span className="text-xs text-red-500 font-medium">{errors.to_school_id[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">الصف الدراسي <span className="text-red-500">*</span></label>
                   <select 
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-primary text-slate-700"
-                    required
                     value={formData.class_id}
                     onChange={e => setFormData({ ...formData, class_id: e.target.value })}
                   >
                     <option value="">-- اختر الصف --</option>
                     {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
+                  {errors.class_id && <span className="text-xs text-red-500 font-medium">{errors.class_id[0]}</span>}
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><FileText size={13} />سبب التحويل (اختياري)</label>

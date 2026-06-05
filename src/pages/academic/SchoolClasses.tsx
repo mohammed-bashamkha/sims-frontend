@@ -265,7 +265,6 @@ export const SchoolClasses: React.FC = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="مثال: الصف الأول"
-                  required
                   className="border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                 />
               </div>
@@ -276,7 +275,6 @@ export const SchoolClasses: React.FC = () => {
                     name="level_id"
                     value={formData.level_id}
                     onChange={handleInputChange}
-                    required
                     className="w-full flex h-10 items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
                     <option value="" disabled>اختر المرحلة</option>

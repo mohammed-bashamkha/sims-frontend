@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
 import api from '@/api/axios';
 import { toast } from '@/store/toastStore';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 // Interfaces based on backend schema
 interface CertificateReplacement {
@@ -32,6 +33,7 @@ export const Replacements: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const { errors, handleApiError, clearErrors } = useFormErrors();
   
   // Options for form
   const [options, setOptions] = useState<{
@@ -279,6 +281,7 @@ export const Replacements: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
     setIsActionLoading(true);
 
     const data = new FormData();
@@ -315,7 +318,7 @@ export const Replacements: React.FC = () => {
       setViewMode('list');
     } catch (error: any) {
       console.error('Error saving record:', error);
-      toast(error.response?.data?.message || 'حدث خطأ أثناء حفظ البيانات', 'error');
+      handleApiError(error);
     } finally {
       setIsActionLoading(false);
     }
@@ -924,6 +927,7 @@ export const Replacements: React.FC = () => {
                           <option key={i} value={type}>{type}</option>
                         ))}
                       </select>
+                      {errors.certificate_type && <span className="text-xs text-red-500 font-medium">{errors.certificate_type[0]}</span>}
                     </div>
                   </div>
                 </div>
@@ -947,6 +951,7 @@ export const Replacements: React.FC = () => {
                           <option key={school.id} value={school.id}>{school.name}</option>
                         ))}
                       </select>
+                      {errors.school_id && <span className="text-xs text-red-500 font-medium">{errors.school_id[0]}</span>}
                     </div>
 
                     <div className="space-y-2">
@@ -962,6 +967,7 @@ export const Replacements: React.FC = () => {
                           <option key={cls.id} value={cls.id}>{cls.name}</option>
                         ))}
                       </select>
+                      {errors.class_id && <span className="text-xs text-red-500 font-medium">{errors.class_id[0]}</span>}
                     </div>
 
                     <div className="space-y-2">
@@ -977,6 +983,7 @@ export const Replacements: React.FC = () => {
                           <option key={yr.id} value={yr.id}>{yr.year || yr.name}</option>
                         ))}
                       </select>
+                      {errors.academic_year_id && <span className="text-xs text-red-500 font-medium">{errors.academic_year_id[0]}</span>}
                     </div>
                   </div>
                 </div>
@@ -995,9 +1002,9 @@ export const Replacements: React.FC = () => {
                           name="request_date"
                           value={formData.request_date}
                           onChange={handleInputChange}
-                          required
                           className="border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                         />
+                        {errors.request_date && <span className="text-xs text-red-500 font-medium">{errors.request_date[0]}</span>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-slate-500">صورة الطالب (اختياري)</label>

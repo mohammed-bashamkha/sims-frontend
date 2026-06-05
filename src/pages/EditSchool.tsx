@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { SchoolForm } from '@/components/schools/SchoolForm';
 import { schoolService } from '@/services/schoolService';
 import type { SchoolFormData } from '@/types/school';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const EditSchool: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,8 @@ export const EditSchool: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [initialData, setInitialData] = useState<Partial<SchoolFormData> | null>(null);
+
+  const { errors, clearErrors, handleApiError } = useFormErrors();
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -39,10 +42,11 @@ export const EditSchool: React.FC = () => {
     if (!id) return;
     try {
       setIsLoading(true);
+      clearErrors();
       await schoolService.updateSchool(id, data);
       navigate('/schools');
-    } catch (error) {
-      console.error('Failed to update school:', error);
+    } catch (error: any) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +85,7 @@ export const EditSchool: React.FC = () => {
           onSubmit={handleSubmit} 
           isEditing={true} 
           isLoading={isLoading} 
+          errors={errors}
         />
       ) : (
         <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">

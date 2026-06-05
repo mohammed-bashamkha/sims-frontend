@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { changePassword } from '@/services/authService';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const ChangePassword: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -14,12 +15,14 @@ export const ChangePassword: React.FC = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { errors, handleApiError, clearErrors } = useFormErrors();
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    clearErrors();
 
     if (newPassword !== confirmPassword) {
       setError('كلمة المرور الجديدة وتأكيدها غير متطابقتين');
@@ -48,12 +51,7 @@ export const ChangePassword: React.FC = () => {
 
       navigate('/dashboard');
     } catch (err: any) {
-      const errors = err.response?.data?.errors;
-      if (errors?.current_password) {
-        setError(errors.current_password[0]);
-      } else {
-        setError(err.response?.data?.message || 'حدث خطأ أثناء تغيير كلمة المرور');
-      }
+      handleApiError(err);
     } finally {
       setIsLoading(false);
     }
@@ -92,12 +90,12 @@ export const ChangePassword: React.FC = () => {
             className="pl-10 text-right"
             value={currentPassword}
             onChange={e => setCurrentPassword(e.target.value)}
-            required
           />
           <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
             {showCurrent ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
+        {errors.current_password && <span className="text-xs text-red-500 font-medium">{errors.current_password[0]}</span>}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -110,12 +108,12 @@ export const ChangePassword: React.FC = () => {
             className="pl-10 text-right"
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
-            required
           />
           <button type="button" onClick={() => setShowNew(!showNew)} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
             {showNew ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
+        {errors.new_password && <span className="text-xs text-red-500 font-medium">{errors.new_password[0]}</span>}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -128,7 +126,6 @@ export const ChangePassword: React.FC = () => {
             className="pl-10 text-right"
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            required
           />
           <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
             {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}

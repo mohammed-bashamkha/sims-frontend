@@ -88,7 +88,6 @@ export const Profile: React.FC = () => {
                   <Input 
                     value={userData.name}
                     onChange={(e) => setUserData({...userData, name: e.target.value})}
-                    required
                     className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -98,7 +97,6 @@ export const Profile: React.FC = () => {
                     type="email"
                     value={userData.email}
                     onChange={(e) => setUserData({...userData, email: e.target.value})}
-                    required
                     className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 text-left"
                     dir="ltr"
                   />
@@ -133,7 +131,6 @@ export const Profile: React.FC = () => {
                     type="password"
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                    required
                     className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 text-left"
                     dir="ltr"
                   />
@@ -146,7 +143,6 @@ export const Profile: React.FC = () => {
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                      required
                       className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 text-left"
                       dir="ltr"
                     />
@@ -157,7 +153,6 @@ export const Profile: React.FC = () => {
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                      required
                       className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 text-left"
                       dir="ltr"
                     />

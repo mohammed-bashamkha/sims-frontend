@@ -7,6 +7,7 @@ import type { AcademicYear, AcademicYearFormData } from '@/services/academicYear
 import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
 import { toast } from '@/store/toastStore';
 import { Can } from '@/components/common/Can';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const AcademicYears: React.FC = () => {
   const [years, setYears] = useState<AcademicYear[]>([]);
@@ -24,6 +25,7 @@ export const AcademicYears: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state
+  const { errors, handleApiError, clearErrors } = useFormErrors();
   const [formData, setFormData] = useState<AcademicYearFormData>({
     year: '',
     start_date: '',
@@ -67,6 +69,7 @@ export const AcademicYears: React.FC = () => {
         status: 'active', // Default new year to active
       });
     }
+    clearErrors();
     setIsModalOpen(true);
   };
 
@@ -102,6 +105,7 @@ export const AcademicYears: React.FC = () => {
       handleCloseModal();
     } catch (error) {
       console.error('Failed to save academic year:', error);
+      handleApiError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -254,10 +258,10 @@ export const AcademicYears: React.FC = () => {
                   value={formData.year}
                   onChange={handleInputChange}
                   placeholder="مثال: 2025/2026"
-                  required
                   dir="ltr"
                   className="text-right border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                 />
+                {errors.year && <span className="text-xs text-red-500 font-medium">{errors.year[0]}</span>}
                 <p className="text-xs text-slate-500">الحد الأقصى 9 أحرف وتكون بصيغة YYYY/YYYY</p>
               </div>
 
@@ -269,9 +273,9 @@ export const AcademicYears: React.FC = () => {
                     name="start_date"
                     value={formData.start_date}
                     onChange={handleInputChange}
-                    required
                     className="border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                   />
+                  {errors.start_date && <span className="text-xs text-red-500 font-medium">{errors.start_date[0]}</span>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">تاريخ النهاية <span className="text-red-500">*</span></label>
@@ -280,9 +284,9 @@ export const AcademicYears: React.FC = () => {
                     name="end_date"
                     value={formData.end_date}
                     onChange={handleInputChange}
-                    required
                     className="border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                   />
+                  {errors.end_date && <span className="text-xs text-red-500 font-medium">{errors.end_date[0]}</span>}
                 </div>
               </div>
 

@@ -14,13 +14,15 @@ interface SchoolFormProps {
   onSubmit: (data: SchoolFormData) => void;
   isEditing?: boolean;
   isLoading?: boolean;
+  errors?: Record<string, string[]>;
 }
 
 export const SchoolForm: React.FC<SchoolFormProps> = ({ 
   initialData, 
   onSubmit, 
   isEditing = false,
-  isLoading = false 
+  isLoading = false,
+  errors = {}
 }) => {
   const [formData, setFormData] = useState<SchoolFormData>({
     name: '',
@@ -67,10 +69,10 @@ export const SchoolForm: React.FC<SchoolFormProps> = ({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                required 
                 placeholder="أدخل اسم المدرسة كاملاً"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className={`w-full border ${errors.name ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:border-primary transition-all`}
               />
+              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -82,12 +84,12 @@ export const SchoolForm: React.FC<SchoolFormProps> = ({
                 name="school_type"
                 value={formData.school_type}
                 onChange={handleChange}
-                required
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                className={`w-full border ${errors.school_type ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:border-primary transition-all bg-white`}
               >
                 <option value="public">حكومية</option>
                 <option value="private">خاصة / أهلية</option>
               </select>
+              {errors.school_type && <p className="text-xs text-red-500 mt-1">{errors.school_type[0]}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -100,11 +102,10 @@ export const SchoolForm: React.FC<SchoolFormProps> = ({
                 name="capacity"
                 value={formData.capacity}
                 onChange={handleChange}
-                required 
-                min="1"
                 placeholder="عدد الطلاب الأقصى"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className={`w-full border ${errors.capacity ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:border-primary transition-all`}
               />
+              {errors.capacity && <p className="text-xs text-red-500 mt-1">{errors.capacity[0]}</p>}
             </div>
 
             <div className="md:col-span-2 space-y-1.5">
@@ -118,8 +119,9 @@ export const SchoolForm: React.FC<SchoolFormProps> = ({
                 value={formData.address}
                 onChange={handleChange}
                 placeholder="المدينة - المديرية - الشارع"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className={`w-full border ${errors.address ? 'border-red-400 focus:ring-red-200' : 'border-slate-200 focus:ring-primary/20'} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:border-primary transition-all`}
               />
+              {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address[0]}</p>}
             </div>
             
           </CardContent>

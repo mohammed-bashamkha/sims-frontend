@@ -368,7 +368,6 @@ export const Subjects: React.FC = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="مثال: الرياضيات"
-                      required
                       className="border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl"
                     />
                   </div>
