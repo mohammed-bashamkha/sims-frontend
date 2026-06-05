@@ -40,7 +40,7 @@ export const TransfersIndex: React.FC = () => {
             className={cn(
               "flex-1 py-4 px-6 text-center font-bold text-sm md:text-base transition-all flex items-center justify-center gap-2 border-b-2 outline-none",
               activeTab === 'external' 
-                ? "border-primary text-primary bg-white shadow-sm" 
+                ? "border-orange-400 text-orange-400 bg-white shadow-sm" 
                 : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             )}
           >
