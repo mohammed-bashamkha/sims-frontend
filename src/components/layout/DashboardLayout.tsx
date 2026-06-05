@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ArrowRightLeft, Clock,
@@ -7,12 +7,31 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout, getStoredUser } from '@/services/authService';
+import { transferService } from '@/services/transferService';
 import medadLogo from '@/assets/medad-logo.png';
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getStoredUser();
+
+  const [pendingTransfers, setPendingTransfers] = useState(0);
+  const [pendingAdmissions, setPendingAdmissions] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const transfersRes = await transferService.getTransfers({ type: 'transfer', status: 'pending', page: 1 });
+        setPendingTransfers(transfersRes.total);
+
+        const admissionsRes = await transferService.getTransfers({ type: 'admission', status: 'pending', page: 1 });
+        setPendingAdmissions(admissionsRes.total);
+      } catch (error) {
+        console.error('Failed to fetch pending counts', error);
+      }
+    };
+    fetchCounts();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -67,7 +86,9 @@ export const DashboardLayout: React.FC = () => {
                   <ArrowRightLeft size={20} />
                   <span>تحويل الطلاب</span>
                 </div>
-                <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">18</span>
+                {pendingTransfers > 0 && (
+                  <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingTransfers}</span>
+                )}
               </Link>
               <Link
                 to="/temporary-admission"
@@ -77,7 +98,9 @@ export const DashboardLayout: React.FC = () => {
                   <Clock size={20} />
                   <span>القبول المؤقت</span>
                 </div>
-                <span className="bg-red-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">22</span>
+                {pendingAdmissions > 0 && (
+                  <span className="bg-red-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingAdmissions}</span>
+                )}
               </Link>
             </div>
           </div>

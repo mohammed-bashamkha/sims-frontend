@@ -33,6 +33,7 @@ export const Replacements: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState<'student' | 'office' | null>(null);
   const { errors, handleApiError, clearErrors } = useFormErrors();
   
   // Options for form
@@ -324,6 +325,46 @@ export const Replacements: React.FC = () => {
     }
   };
 
+  const handleDownloadPdf = async (type: 'student' | 'office') => {
+    if (!viewingRecord) return;
+    setIsPdfLoading(type);
+    try {
+      const response = await api.get(`/pdf/certificate-replacement/${viewingRecord.id}?type=${type}`, {
+        responseType: 'blob',
+        timeout: 60000,
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      const filename = type === 'office' ? `بدل-فاقد-إدارة-${viewingRecord.student.full_name}.pdf` : `بدل-فاقد-طالب-${viewingRecord.student.full_name}.pdf`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        link.remove();
+      }, 200);
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const data = JSON.parse(text);
+          toast(data.message || 'حدث خطأ أثناء تحميل الملف', 'error');
+        } catch {
+          toast('حدث خطأ أثناء تحميل الملف', 'error');
+        }
+      } else {
+        toast('حدث خطأ أثناء تحميل الملف', 'error');
+      }
+    } finally {
+      setIsPdfLoading(null);
+    }
+  };
+
   // --------------------------------------------------------------------------------
   // RENDER CONTENT
   // --------------------------------------------------------------------------------
@@ -338,24 +379,22 @@ export const Replacements: React.FC = () => {
             تفاصيل شهادة / إفادة
           </h3>
           <div className="flex items-center gap-3">
-            <a
-              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/pdf/certificate-replacement/${viewingRecord.id}?type=student`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
+            <button
+              onClick={() => handleDownloadPdf('student')}
+              disabled={isPdfLoading === 'student'}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
             >
-              <FileDown size={16} />
+              {isPdfLoading === 'student' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
               PDF للطالب
-            </a>
-            <a
-              href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/pdf/certificate-replacement/${viewingRecord.id}?type=office`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
+            </button>
+            <button
+              onClick={() => handleDownloadPdf('office')}
+              disabled={isPdfLoading === 'office'}
+              className="inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-800 disabled:opacity-70 text-white font-bold px-4 py-2 rounded-xl shadow-sm transition-colors text-sm print:hidden"
             >
-              <FileDown size={16} />
+              {isPdfLoading === 'office' ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
               PDF للإدارة
-            </a>
+            </button>
             <Button 
               onClick={handleCloseView}
               variant="outline"
