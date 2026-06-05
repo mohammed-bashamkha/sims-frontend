@@ -85,12 +85,6 @@ export const AcademicYears: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate year format (e.g., 2025/2026)
-    if (!/^\d{4}\/\d{4}$/.test(formData.year)) {
-      toast('صيغة السنة الدراسية يجب أن تكون مثلاً: 2025/2026', 'error');
-      return;
-    }
 
     try {
       setIsSubmitting(true);

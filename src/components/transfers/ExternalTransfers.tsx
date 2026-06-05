@@ -261,10 +261,6 @@ export const ExternalTransfers: React.FC = () => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedYearId) {
-      alert('يرجى تحديد السنة الدراسية النشطة');
-      return;
-    }
     clearErrors();
     setIsSubmitting(true);
     try {

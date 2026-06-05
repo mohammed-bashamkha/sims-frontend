@@ -16,22 +16,11 @@ export const ChangePassword: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { errors, handleApiError, clearErrors } = useFormErrors();
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     clearErrors();
-
-    if (newPassword !== confirmPassword) {
-      setError('كلمة المرور الجديدة وتأكيدها غير متطابقتين');
-      return;
-    }
-    if (newPassword.length < 8) {
-      setError('كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل');
-      return;
-    }
 
     setIsLoading(true);
     try {
@@ -63,14 +52,6 @@ export const ChangePassword: React.FC = () => {
         <h2 className="text-xl font-bold text-primary mb-1">تغيير كلمة المرور</h2>
         <p className="text-sm text-muted-foreground">يجب عليك تغيير كلمة المرور قبل المتابعة</p>
       </div>
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm animate-in fade-in">
-          <AlertCircle size={18} className="shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
 
       {/* Password strength hint */}
       {newPassword && (
