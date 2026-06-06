@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
-import { User, Mail, Shield, Key, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Shield, Key, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getStoredUser, changePassword } from '@/services/authService';
+import { useToastStore } from '@/store/toastStore';
+import { ActivityLogsTable } from '@/components/settings/ActivityLogsTable';
+import { getMyActivityLogs } from '@/services/activityLogService';
 
 export const Profile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToastStore();
   
-  // Mock data for the logged-in user
   const [userData, setUserData] = useState({
-    name: 'أحمد محمد عبدالله',
-    email: 'ahmed@sims.edu.ye',
-    roles: ['مدير النظام', 'مشرف المدارس'],
+    name: '',
+    email: '',
+    roles: [] as string[],
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -21,27 +25,38 @@ export const Profile: React.FC = () => {
     confirmPassword: '',
   });
 
-  const handleInfoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('تم حفظ البيانات الشخصية بنجاح!');
-    }, 1000);
-  };
+  useEffect(() => {
+    const user = getStoredUser();
+    if (user) {
+      setUserData({
+        name: user.name,
+        email: user.email,
+        roles: user.roles?.map(r => r.name) || [],
+      });
+    }
+  }, []);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('كلمة المرور الجديدة غير متطابقة!');
+      toast("كلمة المرور الجديدة غير متطابقة!", "error");
       return;
     }
+    
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('تم تغيير كلمة المرور بنجاح!');
+    try {
+      await changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+        new_password_confirmation: passwordData.confirmPassword,
+      });
+      toast("تم تغيير كلمة المرور بنجاح!", "success");
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    }, 1000);
+    } catch (error: any) {
+      toast(error.response?.data?.message || "تعذر تغيير كلمة المرور. يرجى التحقق من كلمة المرور الحالية.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,9 +84,10 @@ export const Profile: React.FC = () => {
       </div>
 
       <Tabs defaultValue="info" className="w-full" dir="rtl">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-slate-100 p-1 rounded-xl">
+        <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 p-1 rounded-xl">
           <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">البيانات الشخصية</TabsTrigger>
           <TabsTrigger value="security" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">الأمان وكلمة المرور</TabsTrigger>
+          <TabsTrigger value="logs" className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm">سجلات النشاط</TabsTrigger>
         </TabsList>
         
         {/* Basic Info Tab */}
@@ -82,13 +98,13 @@ export const Profile: React.FC = () => {
               <h3 className="font-bold text-slate-800">تحديث البيانات الأساسية</h3>
             </div>
             <CardContent className="p-6">
-              <form onSubmit={handleInfoSubmit} className="space-y-5">
+              <div className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">الاسم الكامل</label>
                   <Input 
                     value={userData.name}
-                    onChange={(e) => setUserData({...userData, name: e.target.value})}
-                    className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                    readOnly
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50 cursor-not-allowed text-slate-500 focus-visible:ring-0"
                   />
                 </div>
                 <div className="space-y-2">
@@ -96,19 +112,16 @@ export const Profile: React.FC = () => {
                   <Input 
                     type="email"
                     value={userData.email}
-                    onChange={(e) => setUserData({...userData, email: e.target.value})}
-                    className="h-12 rounded-xl border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary/20 text-left"
+                    readOnly
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50 cursor-not-allowed text-slate-500 focus-visible:ring-0 text-left"
                     dir="ltr"
                   />
                 </div>
                 
-                <div className="pt-4 border-t border-slate-100 flex justify-end">
-                  <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90 text-white rounded-xl px-8 h-12 font-bold shadow-sm">
-                    {isLoading ? <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span> : <Save size={18} className="ml-2" />}
-                    حفظ التغييرات
-                  </Button>
+                <div className="pt-4 border-t border-slate-100">
+                  <p className="text-sm text-slate-500">ملاحظة: لتحديث بياناتك الشخصية، يرجى التواصل مع مسؤول النظام.</p>
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -170,6 +183,19 @@ export const Profile: React.FC = () => {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity Logs Tab */}
+        <TabsContent value="logs">
+          <Card className="border-0 shadow-sm rounded-2xl overflow-hidden">
+            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
+              <History className="text-primary" size={20} />
+              <h3 className="font-bold text-slate-800">سجلات النشاط الخاصة بك</h3>
+            </div>
+            <CardContent className="p-6">
+              <ActivityLogsTable fetchLogs={getMyActivityLogs} />
             </CardContent>
           </Card>
         </TabsContent>

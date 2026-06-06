@@ -18,6 +18,7 @@ import { ShowUser } from './pages/ShowUser';
 import { EditUser } from './pages/EditUser';
 import { ShowRole } from './pages/ShowRole';
 import { EditRole } from './pages/EditRole';
+import { AllActivityLogs } from './pages/AllActivityLogs';
 import { TransfersIndex } from './pages/TransfersIndex';
 import { TemporaryAdmissions } from './pages/TemporaryAdmissions';
 
@@ -66,42 +67,48 @@ function App() {
             <Route path="unauthorized" element={<Unauthorized />} />
 
             {/* ── Students ── */}
-            <Route path="students" element={<StudentRecord />} />
-            <Route path="students/:id" element={<ShowStudent />} />
+            <Route element={<ProtectedRoute allowedPermission="الطلاب.عرض" />}>
+              <Route path="students" element={<StudentRecord />} />
+              <Route path="students/:id" element={<ShowStudent />} />
+            </Route>
             {/* إنشاء طالب: يتطلب صلاحية */}
-            <Route element={<ProtectedRoute allowedPermission="الطلاب.اضافة" />}>
+            <Route element={<ProtectedRoute allowedPermission="الطلاب.انشاء" />}>
               <Route path="students/create" element={<CreateStudent />} />
             </Route>
             {/* تعديل طالب: يتطلب صلاحية */}
-            <Route element={<ProtectedRoute allowedPermission="الطلاب.تعديل" />}>
+            <Route element={<ProtectedRoute allowedPermission="الطلاب.تحديث" />}>
               <Route path="students/edit/:id" element={<EditStudent />} />
             </Route>
             {/* استيراد بيانات الطلاب */}
-            <Route element={<ProtectedRoute allowedPermission="الطلاب.اضافة" />}>
+            <Route element={<ProtectedRoute allowedPermission="الطلاب.استيراد" />}>
               <Route path="students/import" element={<ImportStudents />} />
             </Route>
 
             {/* ── Schools ── */}
-            <Route path="schools" element={<SchoolsIndex />} />
-            <Route element={<ProtectedRoute allowedPermission="المدارس.اضافة" />}>
-              <Route path="schools/create" element={<CreateSchool />} />
+            <Route element={<ProtectedRoute allowedPermission="المدارس.عرض" />}>
+              <Route path="schools" element={<SchoolsIndex />} />
             </Route>
-            <Route element={<ProtectedRoute allowedPermission="المدارس.تعديل" />}>
+            <Route element={<ProtectedRoute allowedPermission="المدارس.ادارة" />}>
+              <Route path="schools/create" element={<CreateSchool />} />
               <Route path="schools/edit/:id" element={<EditSchool />} />
             </Route>
 
             {/* ── Reports ── */}
-            <Route path="reports" element={<StudentsReports />} />
+            <Route element={<ProtectedRoute allowedPermission="الطلاب.توليد_تقارير" />}>
+              <Route path="reports" element={<StudentsReports />} />
+            </Route>
 
             {/* ── Transfers & Admissions ── */}
-            <Route path="transfers" element={<TransfersIndex />} />
-            <Route path="temporary-admission" element={<TemporaryAdmissions />} />
+            <Route element={<ProtectedRoute allowedPermission="التحويلات_القبول.عرض" />}>
+              <Route path="transfers" element={<TransfersIndex />} />
+              <Route path="temporary-admission" element={<TemporaryAdmissions />} />
+            </Route>
 
             {/* ── Academic Affairs ── */}
             <Route path="academic" element={<AcademicLayout />}>
               <Route index element={<AcademicHome />} />
               
-              <Route element={<ProtectedRoute allowedPermission="السنوات_الدراسية.عرض" />}>
+              <Route element={<ProtectedRoute allowedPermission="السنة_الدراسية.عرض" />}>
                 <Route path="years" element={<AcademicYears />} />
               </Route>
 
@@ -117,15 +124,23 @@ function App() {
                 <Route path="grades" element={<StudentGrades />} />
               </Route>
 
-              <Route path="replacements" element={<Replacements />} />
-              <Route path="data-errors" element={<StudentDataErrors />} />
-              <Route path="suspended" element={<SuspendedStudents />} />
+              <Route element={<ProtectedRoute allowedPermission="بدل_فاقد.عرض" />}>
+                <Route path="replacements" element={<Replacements />} />
+              </Route>
+              
+              <Route element={<ProtectedRoute allowedPermission="الاخطاء.عرض" />}>
+                <Route path="data-errors" element={<StudentDataErrors />} />
+              </Route>
+              
+              <Route element={<ProtectedRoute allowedPermission="الطلاب.عرض" />}>
+                <Route path="suspended" element={<SuspendedStudents />} />
+              </Route>
               
               <Route element={<ProtectedRoute allowedPermission="النتائج.استيراد" />}>
                 <Route path="import-final-results" element={<ImportFinalResults />} />
               </Route>
 
-              <Route element={<ProtectedRoute allowedPermission="الطلاب.اضافة" />}>
+              <Route element={<ProtectedRoute allowedPermission="الطلاب.تصدير" />}>
                 <Route path="export-students" element={<ExportStudents />} />
               </Route>
             </Route>
@@ -138,6 +153,7 @@ function App() {
               <Route path="settings/users/edit/:id" element={<EditUser />} />
               <Route path="settings/roles/:id" element={<ShowRole />} />
               <Route path="settings/roles/edit/:id" element={<EditRole />} />
+              <Route path="settings/activity-logs" element={<AllActivityLogs />} />
             </Route>
           </Route>
         </Route>

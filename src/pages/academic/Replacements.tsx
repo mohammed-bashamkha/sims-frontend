@@ -324,7 +324,6 @@ export const Replacements: React.FC = () => {
       setIsActionLoading(false);
     }
   };
-
   const handleDownloadPdf = async (type: 'student' | 'office') => {
     if (!viewingRecord) return;
     setIsPdfLoading(type);
@@ -338,7 +337,8 @@ export const Replacements: React.FC = () => {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      const filename = type === 'office' ? `بدل-فاقد-إدارة-${viewingRecord.student.full_name}.pdf` : `بدل-فاقد-طالب-${viewingRecord.student.full_name}.pdf`;
+      const studentName = viewingRecord.student?.full_name || 'طالب';
+      const filename = type === 'office' ? `بدل-فاقد-إدارة-${studentName}.pdf` : `بدل-فاقد-طالب-${studentName}.pdf`;
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();

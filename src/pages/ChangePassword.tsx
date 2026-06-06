@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { changePassword } from '@/services/authService';
 import { useFormErrors } from '@/hooks/useFormErrors';
 

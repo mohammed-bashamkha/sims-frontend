@@ -3,11 +3,12 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ArrowRightLeft, Clock,
   Building2, BookOpen, BarChart3, Settings,
-  LogOut, Search, Bell, CalendarDays, User
+  LogOut, Search, Bell, CalendarDays, User, History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout, getStoredUser } from '@/services/authService';
 import { transferService } from '@/services/transferService';
+import { Can } from '@/components/common/Can';
 import medadLogo from '@/assets/medad-logo.png';
 
 export const DashboardLayout: React.FC = () => {
@@ -71,64 +72,83 @@ export const DashboardLayout: React.FC = () => {
           <div>
             <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">إدارة الطلاب</h2>
             <div className="space-y-1">
-              <Link
-                to="/students"
-                className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/students') && "bg-primary text-white")}
-              >
-                <Users size={20} />
-                <span>سجل الطلاب</span>
-              </Link>
-              <Link
-                to="/transfers"
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white"
-              >
-                <div className="flex items-center gap-3">
-                  <ArrowRightLeft size={20} />
-                  <span>تحويل الطلاب</span>
-                </div>
-                {pendingTransfers > 0 && (
-                  <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingTransfers}</span>
-                )}
-              </Link>
-              <Link
-                to="/temporary-admission"
-                className={cn("flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/temporary-admission') && "bg-primary text-white")}
-              >
-                <div className="flex items-center gap-3">
-                  <Clock size={20} />
-                  <span>القبول المؤقت</span>
-                </div>
-                {pendingAdmissions > 0 && (
-                  <span className="bg-red-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingAdmissions}</span>
-                )}
-              </Link>
+              <Can permission="الطلاب.عرض">
+                <Link
+                  to="/students"
+                  className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/students') && "bg-primary text-white")}
+                >
+                  <Users size={20} />
+                  <span>سجل الطلاب</span>
+                </Link>
+              </Can>
+              
+              <Can permission="التحويلات_القبول.عرض">
+                <Link
+                  to="/transfers"
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <ArrowRightLeft size={20} />
+                    <span>تحويل الطلاب</span>
+                  </div>
+                  {pendingTransfers > 0 && (
+                    <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingTransfers}</span>
+                  )}
+                </Link>
+                <Link
+                  to="/temporary-admission"
+                  className={cn("flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/temporary-admission') && "bg-primary text-white")}
+                >
+                  <div className="flex items-center gap-3">
+                    <Clock size={20} />
+                    <span>القبول المؤقت</span>
+                  </div>
+                  {pendingAdmissions > 0 && (
+                    <span className="bg-red-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingAdmissions}</span>
+                  )}
+                </Link>
+              </Can>
             </div>
           </div>
 
           <div>
             <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">المدارس و البيانات</h2>
             <div className="space-y-1">
-              <Link to="/schools" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white">
-                <Building2 size={20} />
-                <span>إدارة المدارس</span>
-              </Link>
-              <Link to="/academic" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/academic') && "bg-primary text-white")}>
-                <BookOpen size={20} />
-                <span>الشؤون الأكاديمية</span>
-              </Link>
-              <Link to="/reports" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/reports') && "bg-primary text-white")}>
-                <BarChart3 size={20} />
-                <span>التقارير والإحصاءات</span>
-              </Link>
+              <Can permission="المدارس.عرض">
+                <Link to="/schools" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white">
+                  <Building2 size={20} />
+                  <span>إدارة المدارس</span>
+                </Link>
+              </Can>
+              
+              <Can permission="السنة_الدراسية.عرض">
+                <Link to="/academic" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/academic') && "bg-primary text-white")}>
+                  <BookOpen size={20} />
+                  <span>الشؤون الأكاديمية</span>
+                </Link>
+              </Can>
+
+              <Can permission="الطلاب.توليد_تقارير">
+                <Link to="/reports" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/reports') && "bg-primary text-white")}>
+                  <BarChart3 size={20} />
+                  <span>التقارير والإحصاءات</span>
+                </Link>
+              </Can>
             </div>
           </div>
 
           <div>
             <h2 className="text-xs font-semibold text-slate-500 mb-3 px-2">النظام</h2>
-            <Link to="/settings" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/settings') && "bg-primary text-white")}>
-              <Settings size={20} />
-              <span>إعدادات النظام</span>
-            </Link>
+            <Can permission="المستخدمين.ادارة">
+              <Link to="/settings" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname === '/settings' && "bg-primary text-white")}>
+                <Settings size={20} />
+                <span>إعدادات النظام</span>
+              </Link>
+              <Link to="/settings/activity-logs" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/settings/activity-logs') && "bg-primary text-white")}>
+                <History size={20} />
+                <span>سجلات النظام</span>
+              </Link>
+            </Can>
           </div>
         </nav>
 

@@ -3,13 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, User, ShieldCheck, ShieldAlert, Mail } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import api from '@/api/axios';
+import { History } from 'lucide-react';
+import { ActivityLogsTable } from '@/components/settings/ActivityLogsTable';
+import { getActivityLogs } from '@/services/activityLogService';
 
 export const ShowUser: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showLogs, setShowLogs] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -72,7 +77,14 @@ export const ShowUser: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Action placeholder */}
+          <Button 
+            onClick={() => setShowLogs(!showLogs)} 
+            variant="outline" 
+            className="gap-2 border-slate-200 text-slate-700 font-bold rounded-xl h-11 px-5"
+          >
+            <History size={18} className={showLogs ? "text-primary" : "text-slate-400"} /> 
+            {showLogs ? 'إخفاء سجلات النشاط' : 'عرض سجلات النشاط'}
+          </Button>
         </div>
       </div>
 
@@ -146,6 +158,20 @@ export const ShowUser: React.FC = () => {
         </div>
 
       </div>
+
+      {showLogs && (
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+          <Card className="shadow-sm border border-slate-100 rounded-2xl overflow-hidden">
+            <div className="bg-slate-50/50 border-b border-slate-100 p-5 flex items-center gap-2">
+              <History className="text-primary" size={20} />
+              <h2 className="font-bold text-slate-800 text-lg">سجلات النشاط - {user.name}</h2>
+            </div>
+            <CardContent className="p-6">
+              <ActivityLogsTable fetchLogs={(page) => getActivityLogs(page, id)} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
     </div>
   );
