@@ -96,6 +96,31 @@ export const StudentsReports: React.FC = () => {
     highestStudent: null as any,
   });
 
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
+  const handlePdfExport = async () => {
+    setIsPdfLoading(true);
+    try {
+      const params: any = {};
+      if (selectedYearId) params.academic_year_id = selectedYearId;
+      const res = await api.get('/reports/pdf/comprehensive', {
+        params,
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `التقرير-الشامل-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('حدث خطأ أثناء توليد التقرير، يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
   const [filters, setFilters] = useState({
     school_id: '',
     stage: '',
@@ -305,17 +330,16 @@ export const StudentsReports: React.FC = () => {
                 {academicYears.length === 0 && <option>العام الدراسي 2026 / 2025</option>}
               </select>
             </div>
-            <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-4 py-2 rounded-xl transition-colors border border-slate-200">
-              <Printer size={16} />
-              طباعة
-            </button>
-            <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm">
-              <FileSpreadsheet size={16} />
-              تصدير Excel
-            </button>
-            <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm">
-              <FileText size={16} />
-              PDF رسمي
+            <button
+              onClick={handlePdfExport}
+              disabled={isPdfLoading}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm"
+            >
+              {isPdfLoading ? (
+                <><Loader2 size={16} className="animate-spin" />جاري التوليد...</>
+              ) : (
+                <><FileText size={16} />PDF رسمي شامل</>
+              )}
             </button>
           </div>
         </div>
