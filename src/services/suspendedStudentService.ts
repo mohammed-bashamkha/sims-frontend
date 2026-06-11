@@ -32,29 +32,30 @@ export interface SuspendedEnrollment {
   updated_at: string;
   student: Student;
   school: School;
-  schoolClass: SchoolClass;
-  academicYear: AcademicYear;
+  school_class: SchoolClass;
+  academic_year: AcademicYear;
   original_school?: School;
   expired_admission?: any;
 }
 
 export interface PaginatedResponse<T> {
+  current_page: number;
   data: T[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
   links: {
-    first: string;
-    last: string;
-    prev: string | null;
-    next: string | null;
-  };
-  meta: {
-    current_page: number;
-    from: number;
-    last_page: number;
-    path: string;
-    per_page: number;
-    to: number;
-    total: number;
-  };
+    url: string | null;
+    label: string;
+    active: boolean;
+  }[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
 }
 
 export const suspendedStudentService = {
@@ -69,8 +70,8 @@ export const suspendedStudentService = {
     return response.data.data;
   },
 
-  restoreStudent: async (studentId: number) => {
-    const response = await api.post(`/suspended-students/${studentId}/restore`);
+  restoreStudent: async (studentId: number, action: 'return_to_original' | 'permanent_transfer') => {
+    const response = await api.post(`/suspended-students/${studentId}/restore`, { action });
     return response.data;
   }
 };

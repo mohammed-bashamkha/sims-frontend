@@ -27,7 +27,7 @@ const TABS: { id: ReportTab; label: string }[] = [
 const StatCard: React.FC<{
   title: string;
   value: string | number;
-  sub?: string;
+  sub?: React.ReactNode;
   icon: React.ReactNode;
   iconBg: string;
   valueColor?: string;
@@ -39,7 +39,7 @@ const StatCard: React.FC<{
     <div className="flex-1 min-w-0">
       <p className="text-sm text-slate-500 font-medium mb-1">{title}</p>
       <p className={`text-2xl font-black ${valueColor}`} dir="ltr">{typeof value === 'number' ? value.toLocaleString('en') : value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
     </div>
   </div>
 );
@@ -93,6 +93,7 @@ export const StudentsReports: React.FC = () => {
     topCount: 0,
     failRate: 0,
     previousYearPassRate: 0,
+    highestStudent: null as any,
   });
 
   const [filters, setFilters] = useState({
@@ -118,6 +119,7 @@ export const StudentsReports: React.FC = () => {
     new: 0,
     villages: 0,
     repeaters: 0,
+    previousYearPercentage: 0,
   });
 
   useEffect(() => {
@@ -244,7 +246,7 @@ export const StudentsReports: React.FC = () => {
   const fetchResults = async () => {
     setIsResultsLoading(true);
     try {
-      const params: any = { page: resultsPage };
+      const params: any = { page: resultsPage, _t: new Date().getTime() };
       if (selectedYearId) params.academic_year_id = selectedYearId;
       if (resultsSchoolFilter) params.school_id = resultsSchoolFilter;
       if (resultsClassFilter) params.class_id = resultsClassFilter;
@@ -476,26 +478,26 @@ export const StudentsReports: React.FC = () => {
               />
               <StatCard
                 title="متوسط الدرجات"
-                value={resultsStats.average || 76.4}
-                sub="جميع المواد"
+                value={`${resultsStats.average || 0}%`}
+                sub="لجميع المواد للعام النشط"
                 icon={<BarChart3 size={22} className="text-primary" />}
                 iconBg="bg-primary/10"
               />
               <StatCard
                 title="أوائل المحافظة"
-                value={resultsStats.topCount || 24}
-                sub="طالب حاصل على 95%+"
+                value={resultsStats.topCount || 0}
+                sub="أعلى 3 طلاب من كل مدرسة"
                 icon={<Award size={22} className="text-amber-600" />}
                 iconBg="bg-amber-100"
                 valueColor="text-amber-700"
               />
               <StatCard
-                title="نسبة الرسوب"
-                value={`${resultsStats.failRate || 0}%`}
-                sub="تحسن ملحوظ"
-                icon={<XOctagon size={22} className="text-red-500" />}
-                iconBg="bg-red-100"
-                valueColor="text-red-600"
+                title="الأول على المحافظة"
+                value={resultsStats.highestStudent ? `${resultsStats.highestStudent.average}%` : '—'}
+                sub={resultsStats.highestStudent ? resultsStats.highestStudent.name : 'لا يوجد بيانات'}
+                icon={<Award size={22} className="text-emerald-600" />}
+                iconBg="bg-emerald-100"
+                valueColor="text-emerald-700"
               />
             </div>
           ) : activeTab === 'transfers' ? (
@@ -571,7 +573,13 @@ export const StudentsReports: React.FC = () => {
               <StatCard
                 title="إجمالي الطلاب"
                 value={stats.total}
-                sub="‎+3.2% عن العام الثاني"
+                sub={
+                  <span>
+                    <span className={stats.previousYearPercentage >= 0 ? "text-emerald-600 font-bold" : "text-red-600 font-bold"} dir="ltr">
+                      {stats.previousYearPercentage > 0 ? '+' : ''}{stats.previousYearPercentage}%
+                    </span> عن العام الماضي
+                  </span>
+                }
                 icon={<Users size={22} className="text-primary" />}
                 iconBg="bg-primary/10"
               />
@@ -635,8 +643,8 @@ export const StudentsReports: React.FC = () => {
                       <th className="px-5 py-3.5 font-bold text-slate-600">اسم الطالب</th>
                       <th className="px-5 py-3.5 font-bold text-slate-600">المدرسة</th>
                       <th className="px-5 py-3.5 font-bold text-slate-600">الصف</th>
-                      <th className="px-5 py-3.5 font-bold text-slate-600 text-center">عدد المتقدمين</th>
-                      <th className="px-5 py-3.5 font-bold text-slate-600 text-center">نسبة النجاح</th>
+                      <th className="px-5 py-3.5 font-bold text-slate-600 text-center">المجموع</th>
+                      <th className="px-5 py-3.5 font-bold text-slate-600 text-center">النسبة</th>
                       <th className="px-5 py-3.5 font-bold text-slate-600 text-center">متوسط الدرجات</th>
                       <th className="px-5 py-3.5 font-bold text-slate-600">التاريخ</th>
                       <th className="px-5 py-3.5 font-bold text-slate-600">الحالة</th>
@@ -665,8 +673,8 @@ export const StudentsReports: React.FC = () => {
                       results.map((r: any) => {
                         const isPassed = r.status === 'passed' || r.is_passed === true || r.passed === true;
                         const isConditional = r.status === 'conditional' || r.status === 'مشروط';
-                        const score = Number(r.total_score) || Number(r.average) || Number(r.final_score) || 0;
-                        const passRate = r.pass_rate != null ? `${r.pass_rate}%` : isPassed ? '100%' : '—';
+                        const totalScore = Number(r.total_score) || 0;
+                        const average = Number(r.average) || 0;
                         return (
                           <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-5 py-3.5">
@@ -676,26 +684,26 @@ export const StudentsReports: React.FC = () => {
                             <td className="px-5 py-3.5 text-slate-600 text-sm">{r.school?.name || r.school_name || r.enrollment?.school_name || '—'}</td>
                             <td className="px-5 py-3.5 text-slate-600 text-sm">{r.school_class?.name || r.class_name || r.enrollment?.class_name || '—'}</td>
                             <td className="px-5 py-3.5 text-center">
-                              <span className="font-bold text-slate-700" dir="ltr">{r.total_students || 1}</span>
+                              <span className="font-bold text-slate-700" dir="ltr">{totalScore}</span>
                             </td>
                             <td className="px-5 py-3.5 text-center">
                               <span className={`font-black text-sm ${
                                 isPassed ? 'text-emerald-600' : isConditional ? 'text-amber-600' : 'text-red-600'
-                              }`} dir="ltr">{passRate}</span>
+                              }`} dir="ltr">{average}%</span>
                             </td>
                             <td className="px-5 py-3.5 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden min-w-[60px]">
                                   <div
                                     className={`h-full rounded-full transition-all ${
-                                      score >= 85 ? 'bg-emerald-500' : score >= 65 ? 'bg-amber-400' : 'bg-red-500'
+                                      average >= 85 ? 'bg-emerald-500' : average >= 65 ? 'bg-amber-400' : 'bg-red-500'
                                     }`}
-                                    style={{ width: `${Math.min(score, 100)}%` }}
+                                    style={{ width: `${Math.min(average, 100)}%` }}
                                   />
                                 </div>
                                 <span className={`text-xs font-black w-8 ${
-                                  score >= 85 ? 'text-emerald-600' : score >= 65 ? 'text-amber-600' : 'text-red-600'
-                                }`} dir="ltr">{score}</span>
+                                  average >= 85 ? 'text-emerald-600' : average >= 65 ? 'text-amber-600' : 'text-red-600'
+                                }`} dir="ltr">{average}</span>
                               </div>
                             </td>
                             <td className="px-5 py-3.5 text-slate-500 text-sm" dir="ltr">

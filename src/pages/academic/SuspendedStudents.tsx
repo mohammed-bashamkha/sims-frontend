@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserX, Search, CheckCircle, AlertTriangle, PlayCircle, School, GraduationCap, Loader2, ChevronRight, ChevronLeft, Filter } from 'lucide-react';
+import { UserX, Search, CheckCircle, AlertTriangle, UserCheck, School, GraduationCap, Loader2, ChevronRight, ChevronLeft, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,7 +19,7 @@ export const SuspendedStudents: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState<PaginatedResponse<SuspendedEnrollment>['meta'] | null>(null);
+  const [pagination, setPagination] = useState<PaginatedResponse<SuspendedEnrollment> | null>(null);
   
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
@@ -27,6 +27,7 @@ export const SuspendedStudents: React.FC = () => {
   // Confirmation Modal State
   const [confirmingRecord, setConfirmingRecord] = useState<SuspendedEnrollment | null>(null);
   const [isActivating, setIsActivating] = useState(false);
+  const [restoreAction, setRestoreAction] = useState<'return_to_original' | 'permanent_transfer'>('return_to_original');
 
   useEffect(() => {
     fetchAcademicYears();
@@ -58,7 +59,7 @@ export const SuspendedStudents: React.FC = () => {
         page: currentPage
       });
       setRecords(response.data);
-      setPagination(response.meta);
+      setPagination(response);
     } catch (error) {
       console.error('Error fetching suspended students:', error);
     } finally {
@@ -78,6 +79,7 @@ export const SuspendedStudents: React.FC = () => {
 
   const handleOpenConfirm = (record: SuspendedEnrollment) => {
     setConfirmingRecord(record);
+    setRestoreAction('return_to_original');
   };
 
   const handleCloseConfirm = () => {
@@ -89,7 +91,7 @@ export const SuspendedStudents: React.FC = () => {
     
     setIsActivating(true);
     try {
-      await suspendedStudentService.restoreStudent(confirmingRecord.student_id);
+      await suspendedStudentService.restoreStudent(confirmingRecord.student_id, restoreAction);
       // Success toast is handled by axios interceptor
       setRecords(records.filter(r => r.student_id !== confirmingRecord.student_id));
       setConfirmingRecord(null);
@@ -198,14 +200,14 @@ export const SuspendedStudents: React.FC = () => {
                   <TableRow key={record.id} className="hover:bg-slate-50 transition-colors">
                     <TableCell className="py-4 px-6">
                       <div>
-                        <p className="font-bold text-slate-800">{record.student.full_name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">رقم: <span dir="ltr">{record.student.school_number}</span></p>
+                        <p className="font-bold text-slate-800">{record.student?.full_name || 'غير معروف'}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">رقم: <span dir="ltr">{record.student?.school_number || '-'}</span></p>
                       </div>
                     </TableCell>
                     <TableCell className="py-4 px-6">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
                         <School size={14} />
-                        {record.school.name}
+                        {record.school?.name || 'غير محدد'}
                       </span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
@@ -217,7 +219,7 @@ export const SuspendedStudents: React.FC = () => {
                     <TableCell className="py-4 px-6">
                       <span className="flex items-center gap-2 text-slate-700 font-medium text-sm">
                         <GraduationCap size={16} className="text-slate-400" />
-                        {record.schoolClass.name}
+                        {record.school_class?.name || 'غير محدد'}
                       </span>
                     </TableCell>
                     <TableCell className="text-center py-4 px-6">
@@ -225,8 +227,8 @@ export const SuspendedStudents: React.FC = () => {
                         onClick={() => handleOpenConfirm(record)}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 rounded-xl px-4 shadow-sm h-9"
                       >
-                        <PlayCircle size={16} />
-                        تفعيل وإعادة للطبيعي
+                        <UserCheck size={16} />
+                        تفعيل الطالب
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -294,28 +296,77 @@ export const SuspendedStudents: React.FC = () => {
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="p-8">
               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 mx-auto">
-                <PlayCircle size={32} />
+                <UserCheck size={32} />
               </div>
               
               <h3 className="text-2xl font-black text-center text-slate-800 mb-2">تأكيد تفعيل الطالب</h3>
               <p className="text-center text-slate-500 mb-6 leading-relaxed">
-                هل أنت متأكد من رغبتك في تفعيل الطالب الموقوف <span className="font-bold text-slate-800">{confirmingRecord.student.full_name}</span>؟
-                <br />
-                سيتم إلغاء القبول المؤقت وإعادته إلى مدرسته الأصلية.
+                يرجى تحديد الإجراء المناسب لتفعيل الطالب الموقوف <span className="font-bold text-slate-800">{confirmingRecord.student?.full_name}</span>
               </p>
 
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-8">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">المدرسة الأصلية (الوجهة):</span>
-                  <span className="font-bold text-emerald-700">{confirmingRecord.original_school?.name || 'غير محدد'}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
-                  <span className="text-slate-500">الصف الدراسي:</span>
-                  <span className="font-bold text-slate-700">{confirmingRecord.schoolClass.name}</span>
-                </div>
+              <div className="flex flex-col gap-3 mb-6">
+                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${restoreAction === 'return_to_original' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:border-emerald-200'}`}>
+                  <input
+                    type="radio"
+                    name="restoreAction"
+                    value="return_to_original"
+                    checked={restoreAction === 'return_to_original'}
+                    onChange={() => setRestoreAction('return_to_original')}
+                    className="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="block font-bold text-slate-800 mb-1">إرجاع للمدرسة الأصلية</span>
+                    <span className="text-sm text-slate-500">سيتم إلغاء القبول المؤقت وإعادته إلى مدرسته الأصلية.</span>
+                  </div>
+                </label>
+                
+                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${restoreAction === 'permanent_transfer' ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-blue-200'}`}>
+                  <input
+                    type="radio"
+                    name="restoreAction"
+                    value="permanent_transfer"
+                    checked={restoreAction === 'permanent_transfer'}
+                    onChange={() => setRestoreAction('permanent_transfer')}
+                    className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="block font-bold text-slate-800 mb-1">تحويل دائم للمدرسة الحالية</span>
+                    <span className="text-sm text-slate-500">سيتم تفعيل الطالب في مدرسته الحالية كتحويل دائم.</span>
+                  </div>
+                </label>
               </div>
 
-              {(!confirmingRecord.original_school || !confirmingRecord.original_school.name) && (
+              {restoreAction === 'return_to_original' && (
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-8">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-500">المدرسة المؤقتة (الحالية):</span>
+                    <span className="font-bold text-slate-700">{confirmingRecord.school?.name || '-'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
+                    <span className="text-slate-500">المدرسة الأصلية (الوجهة):</span>
+                    <span className="font-bold text-emerald-700">{confirmingRecord.original_school?.name || 'غير محدد'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
+                    <span className="text-slate-500">الصف الدراسي:</span>
+                    <span className="font-bold text-slate-700">{confirmingRecord.school_class?.name || '-'}</span>
+                  </div>
+                </div>
+              )}
+
+              {restoreAction === 'permanent_transfer' && (
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3 mb-8">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-500">المدرسة الحالية:</span>
+                    <span className="font-bold text-blue-700">{confirmingRecord.school?.name || '-'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-3">
+                    <span className="text-slate-500">الصف الدراسي:</span>
+                    <span className="font-bold text-slate-700">{confirmingRecord.school_class?.name || '-'}</span>
+                  </div>
+                </div>
+              )}
+
+              {restoreAction === 'return_to_original' && (!confirmingRecord.original_school || !confirmingRecord.original_school.name) && (
                 <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm flex items-start gap-3 mb-8">
                   <AlertTriangle size={20} className="shrink-0 mt-0.5 text-amber-600" />
                   <p>

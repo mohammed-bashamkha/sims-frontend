@@ -29,7 +29,7 @@ interface DashboardData {
   needs_attention: {
     transfers_awaiting_review: number;
     expired_temporary_admissions: number;
-    incomplete_files: number;
+    suspended_students: number;
   };
   student_density_alerts: Array<{
     id: number;
@@ -114,17 +114,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 max-w-[1400px] mx-auto pb-8">
-      {/* Alert (Static for now, can be dynamic later) */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-4">
-        <div className="bg-amber-100 p-2 rounded-full text-amber-600 mt-0.5">
-          <AlertTriangle size={20} />
-        </div>
-        <div>
-          <h3 className="font-bold text-amber-800">تنبيه إداري — العام الدراسي</h3>
-          <p className="text-amber-700 text-sm mt-1">تأكد من إكمال جميع إدخالاتك قبل إغلاق العام الدراسي الحالي</p>
-        </div>
-      </div>
-
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">أهلاً، {user.name || 'المستخدم'}</h1>
@@ -234,12 +223,12 @@ export const Dashboard: React.FC = () => {
 
               <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="text-slate-400"><FileWarning size={20} /></div>
-                  <span className="font-medium text-slate-700">ملفات ناقصة وثائق</span>
+                  <div className="text-slate-400"><AlertCircle size={20} className="text-red-500" /></div>
+                  <span className="font-medium text-slate-700">الطلاب الموقوفين</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold text-slate-800">{data.needs_attention.incomplete_files}</span>
-                  <button className="bg-blue-50 text-blue-600 text-xs px-4 py-1.5 rounded-lg font-medium cursor-pointer hover:bg-blue-100 transition-colors">عرض</button>
+                  <span className="font-bold text-slate-800">{data.needs_attention.suspended_students}</span>
+                  <button onClick={() => navigate('/academic/suspended')} className="bg-red-50 text-red-600 text-xs px-4 py-1.5 rounded-lg font-medium cursor-pointer hover:bg-red-100 transition-colors">عرض</button>
                 </div>
               </div>
             </div>
