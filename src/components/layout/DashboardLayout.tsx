@@ -132,7 +132,7 @@ export const DashboardLayout: React.FC = () => {
     setSearchQuery('');
   };
 
-  const handleSchoolClick = (id: number) => {
+  const handleSchoolClick = (_id: number) => {
     navigate(`/schools`);
     setShowDropdown(false);
     setSearchQuery('');

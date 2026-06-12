@@ -43,7 +43,6 @@ export const EditRole: React.FC = () => {
       setAvailablePermissions(permsRes.data);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast('فشل في جلب البيانات', 'error');
       navigate('/settings');
     } finally {
       setIsLoading(false);
@@ -77,11 +76,9 @@ export const EditRole: React.FC = () => {
         name: roleName,
         permissions: selectedPermissions
       });
-      toast('تم تحديث بيانات الدور بنجاح', 'success');
       navigate('/settings');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'فشل في تحديث البيانات';
-      toast(message, 'error');
+      console.error('Failed to update role:', error);
     } finally {
       setIsSubmitting(false);
     }

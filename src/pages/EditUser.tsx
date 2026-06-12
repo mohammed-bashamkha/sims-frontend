@@ -53,7 +53,6 @@ export const EditUser: React.FC = () => {
       setAvailableRoles(rolesRes.data);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast('فشل في جلب البيانات', 'error');
       navigate('/settings');
     } finally {
       setIsLoading(false);
@@ -105,11 +104,9 @@ export const EditUser: React.FC = () => {
       }
 
       await api.put(`/users/${id}`, payload);
-      toast('تم تحديث بيانات المستخدم بنجاح', 'success');
       navigate('/settings');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'فشل في تحديث البيانات';
-      toast(message, 'error');
+      console.error('Failed to update user:', error);
     } finally {
       setIsSubmitting(false);
     }

@@ -15,7 +15,6 @@ import {
 import { Can } from '@/components/common/Can';
 import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
 import api from '@/api/axios';
-import { toast } from '@/store/toastStore';
 
 export const StudentRecord: React.FC = () => {
   const navigate = useNavigate();
@@ -93,10 +92,8 @@ export const StudentRecord: React.FC = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/students/${studentToDelete.id}`);
-      toast('تم حذف الطالب بنجاح', 'success');
       fetchStudents();
     } catch (error: any) {
-      toast(error.response?.data?.message || 'حدث خطأ أثناء حذف الطالب', 'error');
       console.error('Error deleting student:', error);
     } finally {
       setIsDeleting(false);

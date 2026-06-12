@@ -93,14 +93,12 @@ export const RolesManagement: React.FC = () => {
         permissions: selectedPermissions
       });
       
-      toast('تم إنشاء الدور بنجاح', 'success');
       setIsAdding(false);
       setRoleName('');
       setSelectedPermissions([]);
       fetchRoles();
     } catch (error: any) {
-      const message = error.response?.data?.message || 'فشل في إنشاء الدور';
-      toast(message, 'error');
+      console.error('Failed to create role:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -115,11 +113,10 @@ export const RolesManagement: React.FC = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/roles/${deleteModal.role.id}`);
-      toast('تم حذف الدور بنجاح', 'success');
       setDeleteModal({ isOpen: false, role: null });
       fetchRoles();
     } catch (error: any) {
-      toast('فشل في حذف الدور', 'error');
+      console.error('Failed to delete role:', error);
     } finally {
       setIsDeleting(false);
     }

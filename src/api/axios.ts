@@ -21,37 +21,46 @@ api.interceptors.request.use((config) => {
 // Global response interceptor for Toasts and Auth
 api.interceptors.response.use(
   (response) => {
-    // Show success toast for non-GET requests if backend returns a message
+    // Show success toast ONLY for mutation requests (POST/PUT/PATCH/DELETE)
+    // GET requests should never show toasts — messages like "تم جلب البيانات" are noise
     if (response.config.method !== 'get' && response.data?.message) {
       toast(response.data.message, 'success');
-    }
-    // Also show toast for GET requests if they explicitly have a message (e.g. some custom actions)
-    else if (response.config.method === 'get' && response.data?.message && response.status === 200) {
-       toast(response.data.message, 'success');
     }
     return response;
   },
   (error) => {
-    // Handle unauthorized (401)
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    // Handle unauthorized (401) — session expired
+    if (status === 401) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
       
-      // Don't redirect if we are already on login page or trying to login
       if (!window.location.pathname.includes('/auth/login') && !error.config.url?.includes('/login')) {
         window.location.href = '/auth/login';
       }
+      return Promise.reject(error);
     }
 
-    // Handle global error toasts
-    const message = error.response?.data?.message;
-
-    // Ignore connection errors for PDF/Blob requests if they already succeeded or if it's a timeout
+    // Ignore connection errors for PDF/Blob requests
     if (error.config?.responseType === 'blob' && !error.response) {
       return Promise.reject(error);
     }
 
-    if (message && error.response?.status !== 401) {
+    // Handle 403 (Forbidden) — silently ignore for GET requests
+    // The UI already hides unauthorized sections via the <Can> component
+    // Only show error toast for mutation requests (user explicitly tried an action)
+    if (status === 403) {
+      if (error.config.method !== 'get') {
+        toast(error.response?.data?.message || 'غير مصرح بهذا الإجراء', 'error');
+      }
+      return Promise.reject(error);
+    }
+
+    // Handle validation errors (422) — show the message, field errors are handled by components
+    // Handle other errors (500, etc.)
+    const message = error.response?.data?.message;
+    if (message) {
       toast(message, 'error');
     } else if (!error.response) {
       toast('تعذر الاتصال بالخادم. يرجى التحقق من اتصالك.', 'error');

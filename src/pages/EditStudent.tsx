@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { UserCog, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { StudentForm, type StudentFormData } from '@/components/students/StudentForm';
 import api from '@/api/axios';
-import { toast } from '@/store/toastStore';
 import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const EditStudent: React.FC = () => {
@@ -55,7 +54,6 @@ export const EditStudent: React.FC = () => {
         });
       } catch (error: any) {
         console.error('Error fetching data:', error);
-        toast('فشل في تحميل بيانات الطالب أو خيارات النموذج', 'error');
         navigate('/students');
       } finally {
         setIsFetching(false);
@@ -70,7 +68,6 @@ export const EditStudent: React.FC = () => {
     clearErrors();
     try {
       await api.put(`/students/${id}`, data);
-      toast('تم تعديل بيانات الطالب بنجاح!', 'success');
       navigate('/students');
     } catch (error: any) {
       handleApiError(error);

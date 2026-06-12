@@ -14,9 +14,13 @@ interface ToastStore {
   removeToast: (id: string) => void;
 }
 
-export const useToastStore = create<ToastStore>((set) => ({
+export const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
   toast: (message, type = 'info') => {
+    // Prevent duplicate toasts with same message & type
+    const existing = get().toasts;
+    if (existing.some(t => t.message === message && t.type === type)) return;
+
     const id = Math.random().toString(36).substring(2, 9);
     set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
     setTimeout(() => {

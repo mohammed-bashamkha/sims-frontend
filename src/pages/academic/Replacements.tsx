@@ -116,7 +116,6 @@ export const Replacements: React.FC = () => {
       setTotalItems(res.data.total || 0);
     } catch (error) {
       console.error('Error fetching replacements:', error);
-      toast('فشل في تحميل السجلات', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -204,10 +203,9 @@ export const Replacements: React.FC = () => {
     setIsActionLoading(true);
     try {
       await api.delete(`/certificate-replacements/${recordToDelete.id}`);
-      toast('تم حذف السجل بنجاح', 'success');
       fetchRecords();
     } catch (error: any) {
-      toast(error.response?.data?.message || 'حدث خطأ أثناء الحذف', 'error');
+      console.error('Error deleting record:', error);
     } finally {
       setIsActionLoading(false);
       setIsDeleteModalOpen(false);
@@ -306,12 +304,10 @@ export const Replacements: React.FC = () => {
         await api.post(`/certificate-replacements/${editingRecord.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        toast('تم تحديث البيانات بنجاح', 'success');
       } else {
         await api.post('/certificate-replacements', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        toast('تم تسجيل الطلب بنجاح', 'success');
       }
       
       fetchRecords();
