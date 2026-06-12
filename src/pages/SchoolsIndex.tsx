@@ -89,7 +89,7 @@ export const SchoolsIndex: React.FC = () => {
           إدارة المدارس
         </h1>
         <div className="flex gap-3">
-          <Can permission="المدارس.اضافة">
+          <Can permission="المدارس.ادارة">
             <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl shadow-sm px-6" onClick={() => navigate('/schools/create')}>
               <Plus className="mr-2" size={18} />
               إضافة مدرسة جديدة
@@ -144,7 +144,7 @@ export const SchoolsIndex: React.FC = () => {
           </div>
           <h3 className="text-xl font-bold text-slate-800 mb-2">لا توجد مدارس مسجلة</h3>
           <p className="text-slate-500 max-w-xs">لم يتم إضافة أي مدارس إلى النظام بعد. ابدأ بإضافة أول مدرسة الآن.</p>
-          <Can permission="المدارس.اضافة">
+          <Can permission="المدارس.ادارة">
             <Button className="mt-6 font-bold" onClick={() => navigate('/schools/create')}>
               إضافة مدرسة جديدة
             </Button>
@@ -181,7 +181,7 @@ export const SchoolsIndex: React.FC = () => {
                       <Building2 size={16} />
                       <span>التفاصيل</span>
                     </DropdownMenuItem>
-                    <Can permission="المدارس.حذف">
+                    <Can permission="المدارس.ادارة">
                       <DropdownMenuItem onClick={() => handleDeleteClick(school)} className="cursor-pointer flex items-center gap-2 text-red-600 hover:text-red-700 focus:text-red-700 hover:bg-red-50 focus:bg-red-50">
                         <Trash2 size={16} />
                         <span>حذف المدرسة</span>
@@ -211,7 +211,7 @@ export const SchoolsIndex: React.FC = () => {
               </div>
               
               <div className="p-4 bg-slate-50 border-t border-slate-100 rounded-b-2xl">
-                <Can permission="المدارس.تعديل">
+                <Can permission="المدارس.ادارة">
                   <Button 
                     variant="outline" 
                     className="w-full text-slate-600 border-slate-200 hover:bg-white hover:text-primary hover:border-primary/30 transition-colors flex items-center justify-center gap-2 rounded-xl"

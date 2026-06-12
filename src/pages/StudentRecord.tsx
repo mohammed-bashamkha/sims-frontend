@@ -121,19 +121,23 @@ export const StudentRecord: React.FC = () => {
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-3xl font-bold tracking-tight">سجل الطلاب</h1>
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 font-bold"
-            onClick={() => navigate('/academic/export-students')}
-          >
-            <Download className="mr-2" size={18} />
-            تصدير (Excel)
-          </Button>
-          <Can permission="الطلاب.اضافة">
+          <Can permission="الطلاب.تصدير">
+            <Button 
+              variant="outline" 
+              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 font-bold"
+              onClick={() => navigate('/academic/export-students')}
+            >
+              <Download className="mr-2" size={18} />
+              تصدير (Excel)
+            </Button>
+          </Can>
+          <Can permission="الطلاب.استيراد">
             <Button variant="secondary" className="font-bold bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => navigate('/students/import')}>
               <UploadCloud className="mr-2 text-primary" size={18} />
               استيراد بيانات
             </Button>
+          </Can>
+          <Can permission="الطلاب.انشاء">
             <Button className="font-bold" onClick={() => navigate('/students/create')}>
               <UserPlus className="mr-2" size={18} />
               تسجيل طالب جديد
@@ -233,13 +237,13 @@ export const StudentRecord: React.FC = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <Can permission="الطلاب.تعديل">
+                          <Can permission="الطلاب.تحديث">
                             <DropdownMenuItem onClick={() => navigate(`/students/edit/${s.id}`)} className="cursor-pointer flex items-center gap-2">
                               <Edit size={16} />
                               <span>تعديل الطالب</span>
                             </DropdownMenuItem>
                           </Can>
-                          <Can permission="الطلاب.حدف">
+                          <Can permission="الطلاب.حذف">
                             <DropdownMenuItem onClick={() => handleDeleteClick(s)} className="cursor-pointer text-red-600 focus:text-red-600 flex items-center gap-2">
                               <Trash2 size={16} />
                               <span>حذف الطالب</span>

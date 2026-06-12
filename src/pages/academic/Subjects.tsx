@@ -235,7 +235,7 @@ export const Subjects: React.FC = () => {
           </p>
         </div>
 
-        <Can permission="المواد.اضافة">
+        <Can permission="المواد.ادارة">
           <Button 
             onClick={() => handleOpenModal()}
             className="bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl px-6"
@@ -299,7 +299,7 @@ export const Subjects: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Can permission="المواد.تعديل">
+                    <Can permission="المواد.ادارة">
                       <button 
                         onClick={() => handleOpenModal(subject)}
                         className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
@@ -308,7 +308,7 @@ export const Subjects: React.FC = () => {
                         <Edit size={18} />
                       </button>
                     </Can>
-                    <Can permission="المواد.حذف">
+                    <Can permission="المواد.ادارة">
                       <button 
                         onClick={() => handleDeleteClick(subject)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
