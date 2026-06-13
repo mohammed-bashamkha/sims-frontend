@@ -14,6 +14,7 @@ export const AcademicHome: React.FC = () => {
     { name: 'أخطاء البيانات', path: '/academic/data-errors', icon: AlertTriangle, desc: 'مراجعة وتصحيح أخطاء وتعارضات بيانات الطلاب', color: 'text-red-600', bgColor: 'bg-red-100', permission: 'الاخطاء.عرض' },
     { name: 'الطلاب الموقوفين', path: '/academic/suspended', icon: UserX, desc: 'إدارة سجلات الطلاب الموقوفين أو المفصولين', color: 'text-slate-600', bgColor: 'bg-slate-100', permission: 'الطلاب.عرض' },
     { name: 'استيراد النتائج', path: '/academic/import-final-results', icon: FileUp, desc: 'استيراد نتائج الطلاب النهائية ومطابقتها', color: 'text-emerald-600', bgColor: 'bg-emerald-100', permission: 'النتائج.استيراد' },
+    { name: 'تصدير النتائج', path: '/academic/export-final-results', icon: FileDown, desc: 'تصدير الدرجات النهائية للطلاب إلى ملف Excel', color: 'text-cyan-600', bgColor: 'bg-cyan-100', permission: 'النتائج.تصدير' },
     { name: 'تصدير بيانات الطلاب', path: '/academic/export-students', icon: FileDown, desc: 'تصدير بيانات الطلاب إلى ملف Excel حسب المدرسة والصف والسنة', color: 'text-teal-600', bgColor: 'bg-teal-100', permission: 'الطلاب.تصدير' },
   ].filter(section => hasPermission(section.permission));
 

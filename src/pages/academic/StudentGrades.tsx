@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2, FileDown } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { GraduationCap, Search, Plus, Edit, Trash2, Eye, ArrowRight, Save, User, Calendar, Loader2, FileDown, FileUp } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useFormErrors } from '@/hooks/useFormErrors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,8 @@ export const StudentGrades: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const canManage = hasPermission('الدرجات.ادارة');
+  const canImport = hasPermission('النتائج.استيراد');
+  const canExport = hasPermission('النتائج.تصدير');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYearFilter, setSelectedYearFilter] = useState<number>(0);
@@ -391,6 +393,24 @@ export const StudentGrades: React.FC = () => {
             <p className="text-sm text-slate-500 mt-1">
               إدارة رصد درجات الطلاب للمواد الدراسية وعرض النتائج.
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {canExport && (
+              <Link to="/academic/export-final-results">
+                <Button variant="outline" className="gap-2 font-medium">
+                  <FileDown size={16} className="text-cyan-600" />
+                  تصدير النتائج
+                </Button>
+              </Link>
+            )}
+            {canImport && (
+              <Link to="/academic/import-final-results">
+                <Button className="gap-2 font-medium bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <FileUp size={16} />
+                  استيراد النتائج
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
