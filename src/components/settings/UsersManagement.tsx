@@ -109,7 +109,7 @@ export const UsersManagement: React.FC = () => {
       setSelectedRoles([]);
       fetchUsers();
     } catch (error: any) {
-      console.error('Failed to create user:', error);
+      // Axios interceptor handles global errors
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +131,7 @@ export const UsersManagement: React.FC = () => {
       setDeleteModal({ isOpen: false, user: null });
       fetchUsers();
     } catch (error: any) {
-      console.error('Failed to delete user:', error);
+      // Axios interceptor handles global errors
     } finally {
       setIsDeleting(false);
     }

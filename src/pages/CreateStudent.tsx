@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, ChevronLeft, Loader2 } from 'lucide-react';
 import { StudentForm, type StudentFormData } from '@/components/students/StudentForm';
 import api from '@/api/axios';
+import { toast } from '@/store/toastStore';
 import { useFormErrors } from '@/hooks/useFormErrors';
 
 export const CreateStudent: React.FC = () => {
@@ -33,6 +34,7 @@ export const CreateStudent: React.FC = () => {
         });
       } catch (error) {
         console.error('Error fetching options:', error);
+        toast('فشل في تحميل خيارات النموذج', 'error');
       } finally {
         setIsFetching(false);
       }

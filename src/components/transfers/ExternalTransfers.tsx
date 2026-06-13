@@ -137,6 +137,13 @@ const ShowExternal: React.FC<{
             <p className="text-slate-700 leading-relaxed">{record.reason}</p>
           </div>
         )}
+
+        {record.based_on && (
+          <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
+            <p className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-2"><FileText size={13} />اعتماداً على</p>
+            <p className="text-slate-700 leading-relaxed">{record.based_on}</p>
+          </div>
+        )}
       </div>
     </div>
   </div>
@@ -179,7 +186,8 @@ export const ExternalTransfers: React.FC = () => {
     from_external_school_name: '',
     to_school_id: '',
     class_id: '',
-    reason: ''
+    reason: '',
+    based_on: ''
   });
 
   useEffect(() => {
@@ -293,7 +301,8 @@ export const ExternalTransfers: React.FC = () => {
       from_external_school_name: '',
       to_school_id: '',
       class_id: '',
-      reason: ''
+      reason: '',
+      based_on: ''
     });
   };
 
@@ -465,7 +474,7 @@ export const ExternalTransfers: React.FC = () => {
                   </select>
                   {errors.class_id && <span className="text-xs text-red-500 font-medium">{errors.class_id[0]}</span>}
                 </div>
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 md:col-span-1">
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><FileText size={13} />سبب التحويل (اختياري)</label>
                   <textarea 
                     rows={3} 
@@ -473,6 +482,15 @@ export const ExternalTransfers: React.FC = () => {
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-primary text-slate-700 resize-none" 
                     value={formData.reason}
                     onChange={e => setFormData({ ...formData, reason: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-1">
+                  <label className="text-sm font-bold text-slate-700 flex items-center gap-1"><FileText size={13} />اعتماد على (اختياري)</label>
+                  <Input 
+                    placeholder="أدخل المرجع أو القرار..." 
+                    className="w-full h-full min-h-[76px] bg-slate-50" 
+                    value={formData.based_on}
+                    onChange={e => setFormData({ ...formData, based_on: e.target.value })}
                   />
                 </div>
               </div>

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, TrendingUp, MapPin, AlertCircle,
   Filter, Search, ChevronDown, ChevronUp,
-  FileText, Eye,
+  Printer, FileSpreadsheet, FileText, Eye,
   Loader2, ChevronRight, ChevronLeft,
   Building2, AlertTriangle, PauseCircle,
   ArrowLeftRight, CheckCircle2, XCircle, Clock,
-  GraduationCap, BarChart3, Award
+  GraduationCap, BarChart3, Award, XOctagon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { academicYearService, type AcademicYear } from '@/services/academicYearService';

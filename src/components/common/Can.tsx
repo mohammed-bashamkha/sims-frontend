@@ -1,8 +1,8 @@
 import React from 'react';
-import { hasPermission } from '@/services/authService';
+import { hasPermission, hasAnyPermission } from '@/services/authService';
 
 interface CanProps {
-  permission: string;
+  permission: string | string[];
   children: React.ReactNode;
   /** Optional fallback element to show when access is denied (default: nothing) */
   fallback?: React.ReactNode;
@@ -20,7 +20,11 @@ interface CanProps {
  *   </Can>
  */
 export const Can: React.FC<CanProps> = ({ permission, children, fallback = null }) => {
-  if (!hasPermission(permission)) {
+  const allowed = Array.isArray(permission) 
+    ? hasAnyPermission(permission) 
+    : hasPermission(permission);
+
+  if (!allowed) {
     return <>{fallback}</>;
   }
   return <>{children}</>;

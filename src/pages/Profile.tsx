@@ -52,7 +52,7 @@ export const Profile: React.FC = () => {
       });
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      console.error('Password change failed:', error);
+      // Axios interceptor handles global errors
     } finally {
       setIsLoading(false);
     }

@@ -78,7 +78,7 @@ export const EditRole: React.FC = () => {
       });
       navigate('/settings');
     } catch (error: any) {
-      console.error('Failed to update role:', error);
+      // Axios interceptor handles global errors
     } finally {
       setIsSubmitting(false);
     }

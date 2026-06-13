@@ -205,7 +205,7 @@ export const Replacements: React.FC = () => {
       await api.delete(`/certificate-replacements/${recordToDelete.id}`);
       fetchRecords();
     } catch (error: any) {
-      console.error('Error deleting record:', error);
+      // Axios interceptor handles global errors
     } finally {
       setIsActionLoading(false);
       setIsDeleteModalOpen(false);

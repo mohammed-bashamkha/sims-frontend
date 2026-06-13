@@ -106,7 +106,7 @@ export const EditUser: React.FC = () => {
       await api.put(`/users/${id}`, payload);
       navigate('/settings');
     } catch (error: any) {
-      console.error('Failed to update user:', error);
+      // Axios interceptor will handle the error toast
     } finally {
       setIsSubmitting(false);
     }
