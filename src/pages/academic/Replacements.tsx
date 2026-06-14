@@ -30,7 +30,8 @@ interface CertificateReplacement {
 
 export const Replacements: React.FC = () => {
   const [records, setRecords] = useState<CertificateReplacement[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState<'student' | 'office' | null>(null);
@@ -164,7 +165,7 @@ export const Replacements: React.FC = () => {
     }
   };
 
-  const [searchParams] = useSearchParams();
+
 
   React.useEffect(() => {
     fetchRecords();
@@ -942,9 +943,9 @@ export const Replacements: React.FC = () => {
                     <div className="space-y-2">
                       <label className="text-xs font-medium text-slate-500">الطالب</label>
                       <div className="w-full flex h-10 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
-                        {editingRecord ? editingRecord.student?.full_name : (students.find(s => s.id === formData.student_id)?.full_name || 'طالب غير معروف')}
+                        {editingRecord ? editingRecord.student?.full_name : (students.find(s => s.id === formData.student_id)?.full_name || searchParams.get('student_name') || 'طالب غير معروف')}
                         <span className="text-xs font-normal text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200" dir="ltr">
-                          رقم: {editingRecord ? editingRecord.student?.school_number : (students.find(s => s.id === formData.student_id)?.school_number || '-')}
+                          رقم: {editingRecord ? editingRecord.student?.school_number : (students.find(s => s.id === formData.student_id)?.school_number || searchParams.get('school_number') || '-')}
                         </span>
                       </div>
                     </div>

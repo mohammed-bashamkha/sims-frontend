@@ -18,7 +18,8 @@ export const StudentDataErrors: React.FC = () => {
   const [errors, setErrors] = useState<StudentError[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginatedResponse<StudentError>['meta'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +27,7 @@ export const StudentDataErrors: React.FC = () => {
   
   const [viewMode, setViewMode] = useState<'list' | 'view_record'>('list');
   const [viewingRecord, setViewingRecord] = useState<StudentError | null>(null);
-  const [searchParams] = useSearchParams();
+
 
   useEffect(() => {
     fetchAcademicYears();

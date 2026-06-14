@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Search, UserPlus, CheckCircle2, XCircle, Clock, Globe, ArrowRight,
   School, User, Calendar, MapPin, FileText, Eye, Trash2, RefreshCw, Building2,
@@ -155,7 +156,8 @@ export const ExternalTransfers: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'create'>('list');
   const [viewingRecord, setViewingRecord] = useState<TransferAdmissionRecord | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginatedResponse<TransferAdmissionRecord> | null>(null);
 

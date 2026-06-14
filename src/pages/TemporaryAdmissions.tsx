@@ -163,10 +163,11 @@ export const TemporaryAdmissions: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'select_student'>('list');
   const [records, setRecords] = useState<TransferAdmissionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginatedResponse<TransferAdmissionRecord> | null>(null);
-  const [searchParams] = useSearchParams();
+
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
@@ -179,7 +180,7 @@ export const TemporaryAdmissions: React.FC = () => {
   const [schools, setSchools] = useState<SchoolType[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   
-  const [studentSearch, setStudentSearch] = useState('');
+  const [studentSearch, setStudentSearch] = useState(searchParams.get('search') || '');
   const [studentPage, setStudentPage] = useState(1);
   const [studentTotalPages, setStudentTotalPages] = useState(1);
   const [studentTotalItems, setStudentTotalItems] = useState(0);

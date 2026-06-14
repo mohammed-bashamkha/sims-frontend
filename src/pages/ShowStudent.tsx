@@ -37,9 +37,10 @@ function statusBadge(status: string | null) {
 interface EnrollmentRowProps {
   enrollment: StudentEnrollment;
   studentId: string;
+  schoolNumber: string;
 }
 
-const EnrollmentRow: React.FC<EnrollmentRowProps> = ({ enrollment, studentId }) => (
+const EnrollmentRow: React.FC<EnrollmentRowProps> = ({ enrollment, studentId, schoolNumber }) => (
   <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
     <div>
       <div className="flex items-center gap-2 mb-1">
@@ -55,15 +56,33 @@ const EnrollmentRow: React.FC<EnrollmentRowProps> = ({ enrollment, studentId }) 
     </div>
     <div className="flex items-center gap-2 flex-wrap justify-end mt-3 md:mt-0">
       <Link
-        to={`/students/${studentId}/result/${enrollment.academic_year_id}`}
+        to={`/academic/grades?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}&search=${schoolNumber}`}
         className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 hover:text-primary hover:border-primary/30 transition-all flex items-center gap-2"
       >
         <GraduationCap size={16} />
         النتيجة النهائية
       </Link>
+      {enrollment.has_transfer && (
+        <Link
+          to={`/transfers?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}&search=${schoolNumber}`}
+          className="px-4 py-2 bg-amber-50 border border-amber-200 text-amber-600 rounded-lg text-sm font-medium hover:bg-amber-100 transition-all flex items-center gap-2"
+        >
+          <ArrowRightLeft size={16} />
+          التحويل
+        </Link>
+      )}
+      {enrollment.has_temporary_admission && (
+        <Link
+          to={`/temporary-admission?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}&search=${schoolNumber}`}
+          className="px-4 py-2 bg-sky-50 border border-sky-200 text-sky-600 rounded-lg text-sm font-medium hover:bg-sky-100 transition-all flex items-center gap-2"
+        >
+          <Clock size={16} />
+          قبول مؤقت
+        </Link>
+      )}
       {enrollment.has_data_errors && (
         <Link
-          to={`/errors?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}`}
+          to={`/academic/data-errors?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}&search=${schoolNumber}`}
           className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-all flex items-center gap-2"
         >
           <AlertTriangle size={16} />
@@ -72,7 +91,7 @@ const EnrollmentRow: React.FC<EnrollmentRowProps> = ({ enrollment, studentId }) 
       )}
       {enrollment.has_replacement && (
         <Link
-          to={`/certificates?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}`}
+          to={`/academic/replacements?student_id=${studentId}&academic_year_id=${enrollment.academic_year_id}&search=${schoolNumber}`}
           className="px-4 py-2 bg-orange-50 border border-orange-200 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-100 transition-all flex items-center gap-2"
         >
           <FileQuestion size={16} />
@@ -224,7 +243,7 @@ export const ShowStudent: React.FC = () => {
               </div>
               <div className="divide-y divide-slate-100">
                 {previousEnrollments.map((enrollment) => (
-                  <EnrollmentRow key={enrollment.id} enrollment={enrollment} studentId={id!} />
+                  <EnrollmentRow key={enrollment.id} enrollment={enrollment} studentId={id!} schoolNumber={student.school_number} />
                 ))}
               </div>
             </Card>
@@ -268,7 +287,7 @@ export const ShowStudent: React.FC = () => {
 
                     {currentEnrollment.has_final_result && (
                       <Link
-                        to={`/academic/grades?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}`}
+                        to={`/academic/grades?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}&search=${student.school_number}`}
                         className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-primary/5 text-slate-700 hover:text-primary transition-colors border border-transparent hover:border-primary/20 group"
                       >
                         <div className="flex items-center gap-3 font-medium">
@@ -283,7 +302,7 @@ export const ShowStudent: React.FC = () => {
 
                     {currentEnrollment.has_transfer && (
                       <Link
-                        to={`/transfers?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}`}
+                        to={`/transfers?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}&search=${student.school_number}`}
                         className="w-full flex items-center justify-between p-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors border border-transparent hover:border-amber-200 group"
                       >
                         <div className="flex items-center gap-3 font-medium">
@@ -298,7 +317,7 @@ export const ShowStudent: React.FC = () => {
 
                     {currentEnrollment.has_temporary_admission && (
                       <Link
-                        to={`/temporary-admission?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}`}
+                        to={`/temporary-admission?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}&search=${student.school_number}`}
                         className="w-full flex items-center justify-between p-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 transition-colors border border-transparent hover:border-sky-200 group"
                       >
                         <div className="flex items-center gap-3 font-medium">
@@ -313,7 +332,7 @@ export const ShowStudent: React.FC = () => {
 
                     {currentEnrollment.has_data_errors && (
                       <Link
-                        to={`/academic/data-errors?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}`}
+                        to={`/academic/data-errors?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}&search=${student.school_number}`}
                         className="w-full flex items-center justify-between p-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 transition-colors border border-transparent hover:border-red-200 group"
                       >
                         <div className="flex items-center gap-3 font-medium">
@@ -328,7 +347,7 @@ export const ShowStudent: React.FC = () => {
 
                     {currentEnrollment.has_replacement && (
                       <Link
-                        to={`/academic/replacements?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}`}
+                        to={`/academic/replacements?student_id=${id}&academic_year_id=${currentEnrollment.academic_year_id}&search=${student.school_number}`}
                         className="w-full flex items-center justify-between p-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 transition-colors border border-transparent hover:border-orange-200 group"
                       >
                         <div className="flex items-center gap-3 font-medium">
@@ -360,7 +379,7 @@ export const ShowStudent: React.FC = () => {
               <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">إجراءات إضافية</h3>
               <div className="space-y-3">
                 <Link
-                  to={`/academic/replacements?student_id=${id}&action=create`}
+                  to={`/academic/replacements?student_id=${id}&action=create&student_name=${encodeURIComponent(student.full_name)}&school_number=${student.school_number}`}
                   className="w-full flex items-center gap-3 p-3.5 bg-white border border-slate-200 rounded-xl hover:border-orange-300 hover:shadow-sm transition-all text-slate-700 hover:text-orange-600 font-medium group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 group-hover:bg-orange-100 flex items-center justify-center">
@@ -369,7 +388,7 @@ export const ShowStudent: React.FC = () => {
                   إصدار بدل فاقد
                 </Link>
                 <Link
-                  to={`/transfers?student_id=${id}&action=create`}
+                  to={`/transfers?student_id=${id}&action=create&search=${student.school_number}`}
                   className="w-full flex items-center gap-3 p-3.5 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all text-slate-700 hover:text-blue-600 font-medium group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 flex items-center justify-center">
@@ -378,7 +397,7 @@ export const ShowStudent: React.FC = () => {
                   إنشاء تحويل طالب
                 </Link>
                 <Link
-                  to={`/temporary-admission?student_id=${id}&action=create`}
+                  to={`/temporary-admission?student_id=${id}&action=create&search=${student.school_number}`}
                   className="w-full flex items-center gap-3 p-3.5 bg-white border border-slate-200 rounded-xl hover:border-emerald-300 hover:shadow-sm transition-all text-slate-700 hover:text-emerald-600 font-medium group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100 flex items-center justify-center">

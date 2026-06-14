@@ -64,7 +64,8 @@ export const StudentGrades: React.FC = () => {
   const canImport = hasPermission('النتائج.استيراد');
   const canExport = hasPermission('النتائج.تصدير');
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedYearFilter, setSelectedYearFilter] = useState<number>(0);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
@@ -92,7 +93,7 @@ export const StudentGrades: React.FC = () => {
   const { errors, handleApiError, clearErrors } = useFormErrors();
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null); // composite key like 'studentId-yearId'
 
-  const [searchParams] = useSearchParams();
+
 
   // Fetch data
   useEffect(() => {
