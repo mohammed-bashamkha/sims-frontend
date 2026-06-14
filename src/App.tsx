@@ -133,7 +133,7 @@ function App() {
                 <Route path="data-errors" element={<StudentDataErrors />} />
               </Route>
               
-              <Route element={<ProtectedRoute allowedPermission="الطلاب.عرض" />}>
+              <Route element={<ProtectedRoute allowedPermission="الطلاب_الموقوفين.عرض" />}>
                 <Route path="suspended" element={<SuspendedStudents />} />
               </Route>
               

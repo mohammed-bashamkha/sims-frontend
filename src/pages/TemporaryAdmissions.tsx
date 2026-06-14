@@ -15,6 +15,7 @@ import { studentService } from '@/services/studentService';
 import { type Student as StudentType } from '@/types/student';
 import { type School as SchoolType } from '@/types/school';
 import api from '@/api/axios';
+import { useToastStore } from '@/store/toastStore';
 
 // Allowed transitions matching the backend logic exactly
 const ALLOWED_TRANSITIONS: Record<TransferStatus, TransferStatus[]> = {
@@ -160,6 +161,7 @@ const ShowAdmission: React.FC<{ record: TransferAdmissionRecord; onBack: () => v
 );
 
 export const TemporaryAdmissions: React.FC = () => {
+  const { toast } = useToastStore();
   const [viewMode, setViewMode] = useState<'list' | 'select_student'>('list');
   const [records, setRecords] = useState<TransferAdmissionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -345,13 +347,13 @@ export const TemporaryAdmissions: React.FC = () => {
         based_on: formData.based_on,
         status: formData.status
       });
-      alert(res.message);
+      toast(res.message, 'success');
       setIsCreateOpen(false);
       setViewMode('list');
       resetForm();
       fetchAdmissions();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'حدث خطأ أثناء حفظ الطلب');
+      toast(error.response?.data?.message || 'حدث خطأ أثناء حفظ الطلب', 'error');
       console.error('Error creating admission:', error);
     } finally {
       setIsSubmitting(false);
@@ -379,12 +381,12 @@ export const TemporaryAdmissions: React.FC = () => {
         status: confirmAction.targetStatus,
         approval_date: confirmAction.targetStatus === 'approved' ? new Date().toISOString().split('T')[0] : undefined
       });
-      alert(res.message);
+      toast(res.message, 'success');
       fetchAdmissions();
       setConfirmAction(null);
     } catch (error: any) {
       const errorMsg = error.response?.data?.errors?.status?.[0] || error.response?.data?.message || 'حدث خطأ أثناء تحديث الحالة';
-      alert(errorMsg);
+      toast(errorMsg, 'error');
       console.error('Error updating status:', error);
     }
   };
@@ -581,15 +583,21 @@ export const TemporaryAdmissions: React.FC = () => {
   } else {
     content = (
       <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <CalendarRange className="text-primary" size={24} />
-            إدارة طلبات القبول المؤقت
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">قبول الطلاب مؤقتاً في مدارس أخرى لفترة زمنية محددة.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
+            <CalendarRange size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              إدارة طلبات القبول المؤقت
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              قبول الطلاب مؤقتاً في مدارس أخرى لفترة زمنية محددة.
+            </p>
+          </div>
         </div>
-        <Button onClick={() => setViewMode('select_student')} className="gap-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm">
+        <Button onClick={() => setViewMode('select_student')} className="gap-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm h-11 px-6">
           <Plus size={18} /> تسجيل قبول مؤقت جديد
         </Button>
       </div>

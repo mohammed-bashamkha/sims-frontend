@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, Edit, Trash2, Eye, Loader2, Save, X } from 'lucide-react';
+import { ShieldCheck, Plus, Edit, Trash2, Eye, Loader2, Save, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,7 @@ export const RolesManagement: React.FC = () => {
   // Form State
   const [roleName, setRoleName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [permissionSearchQuery, setPermissionSearchQuery] = useState('');
   
   // Delete State
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, role: Role | null}>({
@@ -160,31 +161,46 @@ export const RolesManagement: React.FC = () => {
           </div>
           
           <div className="mb-4">
-            <label className="text-sm font-bold text-slate-800 block mb-3 border-b border-slate-200 pb-2 text-right">
-              الصلاحيات المتاحة (Permissions)
-            </label>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 mb-3 gap-3">
+              <label className="text-sm font-bold text-slate-800 text-right">
+                الصلاحيات المتاحة (Permissions)
+              </label>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Input 
+                  value={permissionSearchQuery}
+                  onChange={(e) => setPermissionSearchQuery(e.target.value)}
+                  placeholder="بحث في الصلاحيات..."
+                  className="h-9 pr-9 bg-white text-xs border-slate-200"
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {permissions.length > 0 ? (
-                permissions.map(perm => (
-                  <label 
-                    key={perm.id} 
-                    htmlFor={perm.name}
-                    className={`flex items-center space-x-2 space-x-reverse p-3 rounded-lg border transition-all cursor-pointer select-none ${
-                      selectedPermissions.includes(perm.name) 
-                        ? 'bg-primary/5 border-primary/30' 
-                        : 'bg-white border-slate-100 shadow-sm hover:border-slate-200'
-                    }`}
-                  >
-                    <Checkbox 
-                      id={perm.name} 
-                      checked={selectedPermissions.includes(perm.name)}
-                      onCheckedChange={() => handlePermissionToggle(perm.name)}
-                    />
-                    <span className={`text-xs font-medium ${selectedPermissions.includes(perm.name) ? 'text-primary' : 'text-slate-700'}`}>
-                      {perm.name}
-                    </span>
-                  </label>
-                ))
+                permissions.filter(p => p.name.includes(permissionSearchQuery)).length > 0 ? (
+                  permissions.filter(p => p.name.includes(permissionSearchQuery)).map(perm => (
+                    <label 
+                      key={perm.id} 
+                      htmlFor={perm.name}
+                      className={`flex items-center space-x-2 space-x-reverse p-3 rounded-lg border transition-all cursor-pointer select-none ${
+                        selectedPermissions.includes(perm.name) 
+                          ? 'bg-primary/5 border-primary/30' 
+                          : 'bg-white border-slate-100 shadow-sm hover:border-slate-200'
+                      }`}
+                    >
+                      <Checkbox 
+                        id={perm.name} 
+                        checked={selectedPermissions.includes(perm.name)}
+                        onCheckedChange={() => handlePermissionToggle(perm.name)}
+                      />
+                      <span className={`text-xs font-medium ${selectedPermissions.includes(perm.name) ? 'text-primary' : 'text-slate-700'}`}>
+                        {perm.name}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400 col-span-full py-4 text-center">لا توجد صلاحيات تطابق بحثك</p>
+                )
               ) : (
                 <p className="text-sm text-slate-400 col-span-full py-4 text-center">جاري تحميل الصلاحيات...</p>
               )}

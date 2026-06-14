@@ -188,12 +188,12 @@ export const StudentDataErrors: React.FC = () => {
                       </div>
                       
                       <div className="bg-red-50/50 p-5 rounded-2xl border border-red-100 shadow-sm">
-                        <p className="text-xs font-bold text-red-400 uppercase mb-2">القيمة القديمة</p>
+                        <p className="text-xs font-bold text-red-400 uppercase mb-2">قبل التصحيح</p>
                         <p className="text-lg font-bold text-red-700 line-through opacity-80">{error.old_value || '—'}</p>
                       </div>
 
                       <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 shadow-sm">
-                        <p className="text-xs font-bold text-emerald-500 uppercase mb-2">القيمة الجديدة</p>
+                        <p className="text-xs font-bold text-emerald-500 uppercase mb-2">بعد التصحيح</p>
                         <p className="text-lg font-bold text-emerald-700">{error.new_value || '—'}</p>
                       </div>
                     </div>
@@ -209,7 +209,7 @@ export const StudentDataErrors: React.FC = () => {
                     <div className="flex items-center gap-6 pt-2 text-xs text-slate-400 font-bold border-t border-slate-50 mt-4">
                       <div className="flex items-center gap-2">
                         <User size={14} />
-                        بواسطة: {error.created_by?.name || error.createdBy}
+                        بواسطة: {error.created_by?.name || 'النظام'}
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock size={14} />
