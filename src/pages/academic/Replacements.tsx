@@ -326,7 +326,7 @@ export const Replacements: React.FC = () => {
     try {
       const response = await api.get(`/pdf/certificate-replacement/${viewingRecord.id}?type=${type}`, {
         responseType: 'blob',
-        timeout: 60000,
+        timeout: 180000,
       });
       
       const blob = new Blob([response.data], { type: 'application/pdf' });

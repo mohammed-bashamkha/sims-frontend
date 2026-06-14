@@ -106,6 +106,7 @@ export const StudentsReports: React.FC = () => {
       const res = await api.get('/reports/pdf/comprehensive', {
         params,
         responseType: 'blob',
+        timeout: 180000,
       });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const a = document.createElement('a');

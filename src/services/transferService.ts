@@ -152,7 +152,7 @@ export const transferService = {
     try {
       const response = await api.get(url, {
         responseType: 'blob',
-        timeout: 60000,
+        timeout: 180000,
       });
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
