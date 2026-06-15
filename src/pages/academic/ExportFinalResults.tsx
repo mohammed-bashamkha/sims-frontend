@@ -21,7 +21,7 @@ interface FormOptions {
   academicYears: { id: number; year: string; status: string }[];
 }
 
-export const ExportStudents: React.FC = () => {
+export const ExportFinalResults: React.FC = () => {
   const [options, setOptions] = useState<FormOptions | null>(null);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -37,7 +37,8 @@ export const ExportStudents: React.FC = () => {
   // Fetch form options on mount
   useEffect(() => {
     setLoadingOptions(true);
-    api.get('/students/export/form')
+    // Using the same endpoint as ImportFinalResults for dropdown options
+    api.get('/students/import')
       .then(res => {
         const data = res.data.data || res.data;
         setOptions(data);
@@ -79,17 +80,14 @@ export const ExportStudents: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await api.post(
-        '/students/export',
-        {
+      const response = await api.get('/export/final-result', {
+        params: {
           school_id: schoolId,
           class_id: classId,
           academic_year_id: academicYearId,
         },
-        {
-          responseType: 'blob', // Important for file download
-        }
-      );
+        responseType: 'blob', // Important for file download
+      });
 
       // Create a download link and trigger it
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -98,7 +96,7 @@ export const ExportStudents: React.FC = () => {
 
       // Try to get filename from Content-Disposition header
       const contentDisposition = response.headers['content-disposition'];
-      let fileName = `Student_Data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      let fileName = `Final_Results_${new Date().toISOString().slice(0, 10)}.xlsx`;
       if (contentDisposition) {
         // Try to match UTF-8 filename first: filename*=UTF-8''...
         const utf8FileNameMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
@@ -122,7 +120,7 @@ export const ExportStudents: React.FC = () => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 5000);
     } catch (err: any) {
-      if (err.response?.status === 422) {
+      if (err.response?.status === 422 || err.response?.status === 404) {
         // Server validation errors
         if (err.response.data instanceof Blob) {
           // Parse blob error response
@@ -135,8 +133,8 @@ export const ExportStudents: React.FC = () => {
             setError('بيانات التصدير غير صحيحة.');
           }
         } else {
-          setValidationErrors(err.response.data.errors || {});
-          setError(err.response.data.message || 'بيانات التصدير غير صحيحة.');
+          setValidationErrors(err.response.data?.errors || {});
+          setError(err.response.data?.message || 'بيانات التصدير غير صحيحة أو الخدمة غير متوفرة.');
         }
       } else {
         setError(err.response?.data?.message || 'حدث خطأ غير متوقع أثناء تصدير البيانات.');
@@ -155,10 +153,10 @@ export const ExportStudents: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileDown className="text-primary" />
-            تصدير بيانات الطلاب
+            تصدير النتائج النهائية
           </h2>
           <p className="text-slate-500 mt-1">
-            تصدير بيانات الطلاب إلى ملف Excel بناءً على المدرسة، الصف، والسنة الدراسية.
+            تصدير درجات الطلاب النهائية إلى ملف Excel بناءً على المدرسة، الصف، والسنة الدراسية.
           </p>
         </div>
       </div>
@@ -168,7 +166,7 @@ export const ExportStudents: React.FC = () => {
         <Card className="lg:col-span-1 border-slate-100 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">إعدادات التصدير</CardTitle>
-            <CardDescription>حدد المعايير لتصفية بيانات الطلاب المراد تصديرها</CardDescription>
+            <CardDescription>حدد المعايير لتصفية الدرجات المراد تصديرها</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingOptions ? (
@@ -259,7 +257,7 @@ export const ExportStudents: React.FC = () => {
                 {/* Submit */}
                 <Button
                   type="submit"
-                  className="w-full mt-2 font-bold gap-2"
+                  className="w-full mt-2 font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                   disabled={loading || !isFormValid}
                 >
                   {loading ? (
@@ -283,7 +281,7 @@ export const ExportStudents: React.FC = () => {
         <Card className="lg:col-span-2 border-slate-100 shadow-sm bg-slate-50/50">
           <CardHeader>
             <CardTitle className="text-lg">معلومات التصدير</CardTitle>
-            <CardDescription>تفاصيل عملية تصدير ملف بيانات الطلاب</CardDescription>
+            <CardDescription>تفاصيل عملية تصدير ملف النتائج النهائية</CardDescription>
           </CardHeader>
           <CardContent>
             {/* Idle State */}
@@ -294,7 +292,7 @@ export const ExportStudents: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <p className="font-medium text-slate-500">اختر المعايير وابدأ التصدير</p>
-                  <p className="text-sm mt-1">سيتم تنزيل ملف Excel يحتوي على بيانات الطلاب</p>
+                  <p className="text-sm mt-1">سيتم تنزيل ملف Excel يحتوي على النتائج النهائية</p>
                 </div>
               </div>
             )}
@@ -302,10 +300,10 @@ export const ExportStudents: React.FC = () => {
             {/* Loading State */}
             {loading && (
               <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-4">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
                 <div className="text-center">
                   <p className="font-medium">جاري تجهيز الملف...</p>
-                  <p className="text-sm mt-1 text-slate-400">يتم الآن استخراج بيانات الطلاب وتجهيز ملف التصدير</p>
+                  <p className="text-sm mt-1 text-slate-400">يتم الآن استخراج النتائج وتجهيز ملف التصدير</p>
                 </div>
               </div>
             )}
@@ -318,7 +316,7 @@ export const ExportStudents: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <p className="text-xl font-bold text-emerald-700">تم التصدير بنجاح!</p>
-                  <p className="text-sm mt-2 text-slate-500">تم تنزيل ملف Excel يحتوي على بيانات الطلاب المحددة.</p>
+                  <p className="text-sm mt-2 text-slate-500">تم تنزيل ملف Excel يحتوي على الدرجات المحددة.</p>
                 </div>
               </div>
             )}

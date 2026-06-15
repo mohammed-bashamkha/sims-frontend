@@ -50,10 +50,9 @@ export const Profile: React.FC = () => {
         new_password: passwordData.newPassword,
         new_password_confirmation: passwordData.confirmPassword,
       });
-      toast("تم تغيير كلمة المرور بنجاح!", "success");
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      toast(error.response?.data?.message || "تعذر تغيير كلمة المرور. يرجى التحقق من كلمة المرور الحالية.", "error");
+      // Axios interceptor handles global errors
     } finally {
       setIsLoading(false);
     }

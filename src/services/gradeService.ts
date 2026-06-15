@@ -5,7 +5,7 @@ export const gradeService = {
     try {
       const response = await api.get(`/pdf/final-result/student/${studentId}/year/${academicYearId}`, {
         responseType: 'blob',
-        timeout: 70000,
+        timeout: 180000,
       });
       
       const blob = new Blob([response.data], { type: 'application/pdf' });

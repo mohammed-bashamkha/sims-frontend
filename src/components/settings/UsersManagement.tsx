@@ -58,7 +58,6 @@ export const UsersManagement: React.FC = () => {
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      toast('فشل في جلب المستخدمين', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -105,14 +104,12 @@ export const UsersManagement: React.FC = () => {
         roles: selectedRoles
       });
       
-      toast('تم إنشاء المستخدم بنجاح', 'success');
       setIsAdding(false);
       setFormData({ name: '', email: '', password: '', password_confirmation: '' });
       setSelectedRoles([]);
       fetchUsers();
     } catch (error: any) {
-      const message = error.response?.data?.message || 'فشل في إنشاء المستخدم';
-      toast(message, 'error');
+      // Axios interceptor handles global errors
     } finally {
       setIsSubmitting(false);
     }
@@ -131,11 +128,10 @@ export const UsersManagement: React.FC = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/users/${deleteModal.user.id}`);
-      toast('تم حذف المستخدم بنجاح', 'success');
       setDeleteModal({ isOpen: false, user: null });
       fetchUsers();
     } catch (error: any) {
-      toast('فشل في حذف المستخدم', 'error');
+      // Axios interceptor handles global errors
     } finally {
       setIsDeleting(false);
     }

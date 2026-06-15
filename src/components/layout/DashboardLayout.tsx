@@ -226,7 +226,7 @@ export const DashboardLayout: React.FC = () => {
                 </Link>
               </Can>
               
-              <Can permission="السنة_الدراسية.عرض">
+              <Can permission={['السنة_الدراسية.عرض', 'الصفوف.عرض', 'المواد.عرض', 'الدرجات.عرض', 'بدل_فاقد.عرض', 'الاخطاء.عرض', 'الطلاب.عرض', 'النتائج.استيراد', 'الطلاب.تصدير']}>
                 <Link to="/academic" className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 transition-colors font-medium hover:bg-slate-800 hover:text-white", location.pathname.startsWith('/academic') && "bg-primary text-white")}>
                   <BookOpen size={20} />
                   <span>الشؤون الأكاديمية</span>

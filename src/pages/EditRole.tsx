@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ShieldCheck, Loader2, Save, X, Key } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, Loader2, Save, X, Key, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ export const EditRole: React.FC = () => {
   
   const [roleName, setRoleName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [permissionSearchQuery, setPermissionSearchQuery] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -43,7 +44,6 @@ export const EditRole: React.FC = () => {
       setAvailablePermissions(permsRes.data);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast('فشل في جلب البيانات', 'error');
       navigate('/settings');
     } finally {
       setIsLoading(false);
@@ -77,11 +77,9 @@ export const EditRole: React.FC = () => {
         name: roleName,
         permissions: selectedPermissions
       });
-      toast('تم تحديث بيانات الدور بنجاح', 'success');
       navigate('/settings');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'فشل في تحديث البيانات';
-      toast(message, 'error');
+      // Axios interceptor handles global errors
     } finally {
       setIsSubmitting(false);
     }
@@ -166,34 +164,50 @@ export const EditRole: React.FC = () => {
         {/* Permissions Grid Card */}
         <Card className="shadow-sm border-2 border-primary/20 rounded-2xl overflow-hidden relative">
           <div className="absolute top-0 right-0 w-1.5 h-full bg-primary"></div>
-          <div className="bg-primary/5 border-b border-primary/10 p-5">
+          <div className="bg-primary/5 border-b border-primary/10 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="font-bold text-primary text-lg flex items-center gap-2">
               <Key className="text-primary" size={20} /> الصلاحيات المرتبطة
             </h2>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/50" size={16} />
+              <Input 
+                value={permissionSearchQuery}
+                onChange={(e) => setPermissionSearchQuery(e.target.value)}
+                placeholder="بحث في الصلاحيات..."
+                className="h-10 pr-10 bg-white border-primary/20 focus:border-primary/50 text-sm rounded-xl"
+              />
+            </div>
           </div>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {availablePermissions.map(perm => (
-                <label 
-                  key={perm.id} 
-                  htmlFor={perm.name}
-                  className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                    selectedPermissions.includes(perm.name) 
-                      ? 'bg-primary/5 border-primary/30 shadow-sm' 
-                      : 'bg-slate-50/50 border-slate-100 hover:border-slate-200'
-                  }`}
-                >
-                  <span className={`text-xs font-bold ${selectedPermissions.includes(perm.name) ? 'text-primary' : 'text-slate-600'}`}>
-                    {perm.name}
-                  </span>
-                  <Checkbox 
-                    id={perm.name}
-                    checked={selectedPermissions.includes(perm.name)}
-                    onCheckedChange={() => handlePermissionToggle(perm.name)}
-                    className="border-slate-300 w-4 h-4"
-                  />
-                </label>
-              ))}
+              {availablePermissions.filter(p => p.name.includes(permissionSearchQuery)).length > 0 ? (
+                availablePermissions.filter(p => p.name.includes(permissionSearchQuery)).map(perm => (
+                  <label 
+                    key={perm.id} 
+                    htmlFor={perm.name}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      selectedPermissions.includes(perm.name) 
+                        ? 'bg-primary/5 border-primary/30 shadow-sm' 
+                        : 'bg-slate-50/50 border-slate-100 hover:border-slate-200'
+                    }`}
+                  >
+                    <span className={`text-xs font-bold ${selectedPermissions.includes(perm.name) ? 'text-primary' : 'text-slate-600'}`}>
+                      {perm.name}
+                    </span>
+                    <Checkbox 
+                      id={perm.name}
+                      checked={selectedPermissions.includes(perm.name)}
+                      onCheckedChange={() => handlePermissionToggle(perm.name)}
+                      className="border-slate-300 w-4 h-4"
+                    />
+                  </label>
+                ))
+              ) : (
+                <div className="col-span-full py-12 text-center text-slate-500 flex flex-col items-center justify-center">
+                  <Search size={32} className="text-slate-300 mb-3" />
+                  <p>لا توجد صلاحيات تطابق بحثك "{permissionSearchQuery}"</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -34,6 +34,7 @@ import { StudentDataErrors } from './pages/academic/StudentDataErrors';
 import { SuspendedStudents } from './pages/academic/SuspendedStudents';
 import { ImportStudents } from './pages/academic/ImportStudents';
 import { ImportFinalResults } from './pages/academic/ImportFinalResults';
+import { ExportFinalResults } from './pages/academic/ExportFinalResults';
 import { ExportStudents } from './pages/academic/ExportStudents';
 import { Unauthorized } from './pages/Unauthorized';
 import { StudentsReports } from './pages/StudentsReports';
@@ -132,12 +133,16 @@ function App() {
                 <Route path="data-errors" element={<StudentDataErrors />} />
               </Route>
               
-              <Route element={<ProtectedRoute allowedPermission="الطلاب.عرض" />}>
+              <Route element={<ProtectedRoute allowedPermission="الطلاب_الموقوفين.عرض" />}>
                 <Route path="suspended" element={<SuspendedStudents />} />
               </Route>
               
               <Route element={<ProtectedRoute allowedPermission="النتائج.استيراد" />}>
                 <Route path="import-final-results" element={<ImportFinalResults />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedPermission="النتائج.تصدير" />}>
+                <Route path="export-final-results" element={<ExportFinalResults />} />
               </Route>
 
               <Route element={<ProtectedRoute allowedPermission="الطلاب.تصدير" />}>

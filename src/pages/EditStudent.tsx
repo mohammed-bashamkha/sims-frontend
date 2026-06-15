@@ -70,7 +70,6 @@ export const EditStudent: React.FC = () => {
     clearErrors();
     try {
       await api.put(`/students/${id}`, data);
-      toast('تم تعديل بيانات الطالب بنجاح!', 'success');
       navigate('/students');
     } catch (error: any) {
       handleApiError(error);

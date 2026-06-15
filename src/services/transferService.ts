@@ -92,6 +92,7 @@ export const transferService = {
     student_id: number;
     to_school_id: number;
     reason?: string;
+    based_on?: string;
     request_date?: string;
     status?: TransferStatus;
   }) => {
@@ -113,7 +114,7 @@ export const transferService = {
     return response.data;
   },
 
-  updateStatus: async (id: number, data: { status: TransferStatus; approval_date?: string; reason?: string }) => {
+  updateStatus: async (id: number, data: { status: TransferStatus; approval_date?: string; reason?: string; based_on?: string }) => {
     const response = await api.put<{ message: string; data: TransferAdmissionRecord }>(`/transfers-admissions/${id}`, data);
     return response.data;
   },
@@ -136,6 +137,7 @@ export const transferService = {
     academic_year_id: number;
     from_external_school_name: string;
     reason?: string;
+    based_on?: string;
   }) => {
     const response = await api.post<{ message: string; data: any }>('/register-student-out-region', data);
     return response.data;
@@ -150,7 +152,7 @@ export const transferService = {
     try {
       const response = await api.get(url, {
         responseType: 'blob',
-        timeout: 60000,
+        timeout: 180000,
       });
       
       const blob = new Blob([response.data], { type: 'application/pdf' });

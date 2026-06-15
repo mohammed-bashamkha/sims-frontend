@@ -169,34 +169,57 @@ export const ActivityLogsTable: React.FC<ActivityLogsTableProps> = ({ fetchLogs,
           </div>
 
           {/* Pagination */}
-          {pagination.last_page > 1 && (
+          {pagination.total > 0 && (
             <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/50">
               <span className="text-sm text-slate-500">
                 إجمالي السجلات: <span className="font-bold text-slate-700">{pagination.total}</span>
               </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadLogs(pagination.current_page - 1)}
-                  disabled={pagination.current_page === 1 || isLoading}
-                  className="h-8 w-8 p-0 rounded-lg"
-                >
-                  <ChevronRight size={16} />
-                </Button>
-                <span className="text-sm font-medium px-4 bg-white border border-slate-200 rounded-lg h-8 flex items-center">
-                  {pagination.current_page} من {pagination.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadLogs(pagination.current_page + 1)}
-                  disabled={pagination.current_page === pagination.last_page || isLoading}
-                  className="h-8 w-8 p-0 rounded-lg"
-                >
-                  <ChevronLeft size={16} />
-                </Button>
-              </div>
+              
+              {pagination.last_page > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadLogs(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1 || isLoading}
+                    className="gap-1 rounded-lg"
+                  >
+                    <ChevronRight size={16} />
+                    السابق
+                  </Button>
+                  
+                  <div className="flex items-center gap-1 hidden sm:flex">
+                    {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === pagination.last_page || Math.abs(p - pagination.current_page) <= 1)
+                      .map((p, i, arr) => (
+                        <React.Fragment key={p}>
+                          {i > 0 && arr[i-1] !== p - 1 && <span className="px-2 text-slate-400">...</span>}
+                          <Button
+                            variant={pagination.current_page === p ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => loadLogs(p)}
+                            className={`w-9 h-9 p-0 rounded-lg ${pagination.current_page === p ? 'shadow-md shadow-primary/20' : ''}`}
+                            disabled={isLoading}
+                          >
+                            {p}
+                          </Button>
+                        </React.Fragment>
+                      ))
+                    }
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadLogs(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.last_page || isLoading}
+                    className="gap-1 rounded-lg"
+                  >
+                    التالي
+                    <ChevronLeft size={16} />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

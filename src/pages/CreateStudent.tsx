@@ -47,7 +47,6 @@ export const CreateStudent: React.FC = () => {
     clearErrors();
     try {
       await api.post('/students', data);
-      toast('تم تسجيل الطالب بنجاح!', 'success');
       navigate('/students');
     } catch (error: any) {
       handleApiError(error);

@@ -163,6 +163,13 @@ const ShowTransfer: React.FC<{
             <p className="text-slate-700 leading-relaxed">{record.reason}</p>
           </div>
         )}
+
+        {record.based_on && (
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+            <p className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-2"><FileText size={14} />اعتماداً على</p>
+            <p className="text-slate-700 leading-relaxed">{record.based_on}</p>
+          </div>
+        )}
       </div>
     </div>
   </div>
@@ -173,10 +180,11 @@ export const InternalTransfers: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'select_student'>('list');
   const [records, setRecords] = useState<TransferAdmissionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginatedResponse<TransferAdmissionRecord> | null>(null);
-  const [searchParams] = useSearchParams();
+
 
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [selectedYearId, setSelectedYearId] = useState<number | string>('');
@@ -194,7 +202,7 @@ export const InternalTransfers: React.FC = () => {
   const [classes, setClasses] = useState<any[]>([]);
 
   // Select Student states
-  const [studentSearch, setStudentSearch] = useState('');
+  const [studentSearch, setStudentSearch] = useState(searchParams.get('search') || '');
   const [studentPage, setStudentPage] = useState(1);
   const [studentTotalPages, setStudentTotalPages] = useState(1);
   const [studentTotalItems, setStudentTotalItems] = useState(0);
@@ -209,6 +217,7 @@ export const InternalTransfers: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentSearch | null>(null);
   const [targetSchoolId, setTargetSchoolId] = useState<string>('');
   const [transferReason, setTransferReason] = useState('');
+  const [transferBasedOn, setTransferBasedOn] = useState('');
   const [transferStatus, setTransferStatus] = useState<TransferStatus>('pending');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null);
@@ -338,6 +347,7 @@ export const InternalTransfers: React.FC = () => {
     setSelectedStudent(student);
     setTargetSchoolId('');
     setTransferReason('');
+    setTransferBasedOn('');
     setIsCreateOpen(true);
   };
 
@@ -349,6 +359,7 @@ export const InternalTransfers: React.FC = () => {
         student_id: selectedStudent.id,
         to_school_id: Number(targetSchoolId),
         reason: transferReason,
+        based_on: transferBasedOn,
         status: transferStatus
       });
       setIsCreateOpen(false);
@@ -367,6 +378,7 @@ export const InternalTransfers: React.FC = () => {
     setStudentSearch('');
     setTargetSchoolId('');
     setTransferReason('');
+    setTransferBasedOn('');
     setTransferStatus('pending');
   };
 
@@ -841,6 +853,15 @@ export const InternalTransfers: React.FC = () => {
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-primary text-slate-700 resize-none" 
                   value={transferReason}
                   onChange={e => setTransferReason(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><FileText size={15} className="text-slate-400" />اعتماد على (اختياري)</label>
+                <Input 
+                  placeholder="أدخل المرجع أو القرار..." 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-primary text-slate-700" 
+                  value={transferBasedOn}
+                  onChange={e => setTransferBasedOn(e.target.value)}
                 />
               </div>
               <div className="flex gap-3 pt-4 border-t border-slate-100">

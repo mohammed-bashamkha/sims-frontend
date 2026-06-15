@@ -13,7 +13,7 @@ import {
 import { suspendedStudentService, type SuspendedEnrollment } from '@/services/suspendedStudentService';
 import { academicYearService, type AcademicYear } from '@/services/academicYearService';
 import { type PaginatedResponse } from '@/services/suspendedStudentService';
-
+import { Can } from '@/components/common/Can';
 export const SuspendedStudents: React.FC = () => {
   const [records, setRecords] = useState<SuspendedEnrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,15 +112,19 @@ export const SuspendedStudents: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header and Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <UserX className="text-red-500" size={24} />
-            الطلاب الموقوفين (انتهاء القبول المؤقت)
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            إدارة الطلاب الموقوفين بسبب انتهاء فترة قبولهم المؤقت، وإمكانية إعادتهم لمدارسهم الأصلية.
-          </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-red-100 text-red-500 rounded-xl flex items-center justify-center shrink-0">
+            <UserX size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              الطلاب الموقوفين (انتهاء القبول المؤقت)
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              إدارة الطلاب الموقوفين بسبب انتهاء فترة قبولهم المؤقت، وإمكانية إعادتهم لمدارسهم الأصلية.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -223,13 +227,15 @@ export const SuspendedStudents: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-center py-4 px-6">
-                      <Button 
-                        onClick={() => handleOpenConfirm(record)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 rounded-xl px-4 shadow-sm h-9"
-                      >
-                        <UserCheck size={16} />
-                        تفعيل الطالب
-                      </Button>
+                      <Can permission="الطلاب_الموقوفين.تفعيل">
+                        <Button 
+                          onClick={() => handleOpenConfirm(record)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 rounded-xl px-4 shadow-sm h-9"
+                        >
+                          <UserCheck size={16} />
+                          تفعيل الطالب
+                        </Button>
+                      </Can>
                     </TableCell>
                   </TableRow>
                 ))

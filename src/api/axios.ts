@@ -25,10 +25,6 @@ api.interceptors.response.use(
     if (response.config.method !== 'get' && response.data?.message) {
       toast(response.data.message, 'success');
     }
-    // Also show toast for GET requests if they explicitly have a message (e.g. some custom actions)
-    else if (response.config.method === 'get' && response.data?.message && response.status === 200) {
-       toast(response.data.message, 'success');
-    }
     return response;
   },
   (error) => {
@@ -43,15 +39,18 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle global error toasts
-    const message = error.response?.data?.message;
-
     // Ignore connection errors for PDF/Blob requests if they already succeeded or if it's a timeout
     if (error.config?.responseType === 'blob' && !error.response) {
       return Promise.reject(error);
     }
 
-    if (message && error.response?.status !== 401) {
+    const message = error.response?.data?.message;
+
+    // Handle global error toasts
+    if (error.response?.status === 422) {
+      // For validation errors, we show a general message, field specific errors are handled by components
+      toast(message || 'يرجى التحقق من صحة البيانات المدخلة', 'error');
+    } else if (message && error.response?.status !== 401) {
       toast(message, 'error');
     } else if (!error.response) {
       toast('تعذر الاتصال بالخادم. يرجى التحقق من اتصالك.', 'error');

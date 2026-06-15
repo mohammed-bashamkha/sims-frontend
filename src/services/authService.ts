@@ -42,6 +42,10 @@ export function hasPermission(permission: string): boolean {
   return false;
 }
 
+export function hasAnyPermission(permissions: string[]): boolean {
+  return permissions.some(hasPermission);
+}
+
 export interface ChangePasswordPayload {
   current_password: string;
   new_password: string;

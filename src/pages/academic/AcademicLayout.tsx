@@ -16,6 +16,7 @@ export const AcademicLayout: React.FC = () => {
     'data-errors': 'أخطاء البيانات',
     'suspended': 'الطلاب الموقوفين',
     'import-final-results': 'استيراد النتائج',
+    'export-final-results': 'تصدير النتائج النهائية',
     'export-students': 'تصدير بيانات الطلاب',
   };
 
