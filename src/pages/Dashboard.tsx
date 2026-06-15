@@ -188,6 +188,49 @@ export const Dashboard: React.FC = () => {
       {/* Middle Section Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
+         {/* إجراءات سريعة (Col 2) */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Activity size={20} className="text-slate-500" />
+            إجراءات سريعة
+          </h2>
+          
+          <div className="flex flex-col gap-3 h-full">
+            <button 
+              onClick={() => navigate('/students/create')}
+              className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group border-0 text-right flex-1"
+            >
+              <div>
+                <h3 className="font-bold text-lg">تسجيل طالب جديد</h3>
+                <p className="text-blue-100 text-sm mt-1">إضافة ملف فردي</p>
+              </div>
+              <div className="bg-white/20 p-3 rounded-full group-hover:scale-110 transition-transform">
+                <UserPlus size={24} />
+              </div>
+            </button>
+
+            <button onClick={() => navigate('/students/import')} className="bg-white border-slate-100 hover:border-slate-200 border rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group text-right flex-1">
+              <div>
+                <h3 className="font-bold text-slate-800 text-lg">استيراد بيانات</h3>
+                <p className="text-slate-500 text-sm mt-1" dir="ltr">ملفات Excel</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
+                <UploadCloud size={24} />
+              </div>
+            </button>
+
+            <button onClick={() => navigate('/academic')} className="bg-white border-slate-100 hover:border-slate-200 border rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group text-right flex-1">
+              <div>
+                <h3 className="font-bold text-slate-800 text-lg">الشؤون الأكاديمية</h3>
+                <p className="text-slate-500 text-sm mt-1" dir="ltr">نتائج وفصول</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
+                <Download size={24} />
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* تحتاج متابعة الآن (Col 3) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -235,48 +278,7 @@ export const Dashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* إجراءات سريعة (Col 2) */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Activity size={20} className="text-slate-500" />
-            إجراءات سريعة
-          </h2>
-          
-          <div className="flex flex-col gap-3 h-full">
-            <button 
-              onClick={() => navigate('/students/create')}
-              className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group border-0 text-right flex-1"
-            >
-              <div>
-                <h3 className="font-bold text-lg">تسجيل طالب جديد</h3>
-                <p className="text-blue-100 text-sm mt-1">إضافة ملف فردي</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-full group-hover:scale-110 transition-transform">
-                <UserPlus size={24} />
-              </div>
-            </button>
-
-            <button onClick={() => navigate('/students/import')} className="bg-white border-slate-100 hover:border-slate-200 border rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group text-right flex-1">
-              <div>
-                <h3 className="font-bold text-slate-800 text-lg">استيراد بيانات</h3>
-                <p className="text-slate-500 text-sm mt-1" dir="ltr">ملفات Excel</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
-                <UploadCloud size={24} />
-              </div>
-            </button>
-
-            <button onClick={() => navigate('/academic')} className="bg-white border-slate-100 hover:border-slate-200 border rounded-2xl p-5 flex items-center justify-between transition-colors shadow-sm group text-right flex-1">
-              <div>
-                <h3 className="font-bold text-slate-800 text-lg">الشؤون الأكاديمية</h3>
-                <p className="text-slate-500 text-sm mt-1" dir="ltr">نتائج وفصول</p>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
-                <Download size={24} />
-              </div>
-            </button>
-          </div>
-        </div>
+       
 
       </div>
 

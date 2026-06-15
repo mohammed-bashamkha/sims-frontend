@@ -632,6 +632,7 @@ export const TemporaryAdmissions: React.FC = () => {
             <TableHeader className="bg-slate-50 border-b border-slate-200">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="font-bold text-slate-700 text-right py-4 px-4">الطالب</TableHead>
+                <TableHead className="font-bold text-slate-700 text-right py-4 px-4">الرقم المدرسي</TableHead>
                 <TableHead className="font-bold text-slate-700 text-right py-4 px-4">المدرسة الأصلية</TableHead>
                 <TableHead className="font-bold text-slate-700 text-right py-4 px-4">مدرسة القبول المؤقت</TableHead>
                 <TableHead className="font-bold text-slate-700 text-right py-4 px-4">الصف</TableHead>
@@ -661,8 +662,8 @@ export const TemporaryAdmissions: React.FC = () => {
                     <TableRow key={r.id} className="hover:bg-slate-50 transition-colors">
                       <TableCell className="py-3 px-4">
                         <p className="font-bold text-slate-800">{r.student?.full_name}</p>
-                        <p className="text-xs text-slate-500 font-mono" dir="ltr">{r.student?.school_number}</p>
                       </TableCell>
+                      <TableCell className="py-3 px-4 text-sm text-slate-600">{r.student?.school_number}</TableCell>
                       <TableCell className="py-3 px-4 text-sm text-slate-600">{r.from_school?.name}</TableCell>
                       <TableCell className="py-3 px-4 text-sm font-bold text-primary">{r.to_school?.name}</TableCell>
                       <TableCell className="py-3 px-4 text-sm text-slate-600">{r.school_class?.name}</TableCell>
